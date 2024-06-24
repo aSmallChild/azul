@@ -2,7 +2,6 @@ export function createPlayer() {
     return {
         name: '',
         score: 0,
-        factory: [],
         patternLines: [],
         wall: [],
         floorLine: [],
@@ -10,10 +9,10 @@ export function createPlayer() {
 }
 
 export function createGameRules() {
-    const colours = [1, 2, 3, 4, 5];
+    const numberOfColours = 5;
     return {
-        colours,
-        tilesPerColour: colours.length * 4,
+        numberOfColours,
+        tilesPerColour: numberOfColours * 4,
         floorLinePenalties: [-1, -1, -2, -2, -2, -3, -3],
         rowPoints: 2,
         columnPoints: 7,
@@ -26,7 +25,9 @@ export function createGameState() {
     return {
         players: [],
         currentPlayerIndex: null,
-        factoryTiles: [],
-        centerOfTable: [],
+        factoryDisplays: [[]],
+        centerOfTable: [-1],
+        tileBag: [],
+        discardedTiles: [],
     }
 }
