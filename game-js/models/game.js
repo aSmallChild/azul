@@ -21,8 +21,9 @@ export function createGameRules() {
     }
 }
 
-export function createGameState() {
+export function createGameState(rules = createGameRules()) {
     return {
+        rules,
         players: [],
         currentPlayerIndex: null,
         factoryDisplays: [[]],
