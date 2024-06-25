@@ -7,20 +7,115 @@ function setStartingPlayer(gameState, index) {
 }
 
 export function addPlayer(gameState, player) {
+    const { rules: { numberOfColours } } = gameState;
     gameState.players.push(player);
     gameState.factoryDisplays.push([], []);
+    player.wall = Array.from(
+        { length: numberOfColours },
+        () => Array.from(
+            { length: numberOfColours },
+            () => null
+        )
+    );
+    player.patternLines = Array.from(
+        { length: numberOfColours },
+        (_, y) => Array.from(
+            { length: y + 1 },
+            () => null
+        )
+    );
 }
 
-function drawFromFactory(gameState, factoryDisplay, player, colour, patternLineIndex = -1) {
-    // TODO
+export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colour, patternLineIndex = -1) {
+    if (!factoryDisplay.length) {
+        return {
+            success: false,
+            message: 'That factory display is empty.'
+        };
+    }
+
+    const tiles = factoryDisplay.filter(tile => tile === colour);
+    if (!tiles.length) {
+        return {
+            success: false,
+            message: 'That colour is not in that factory display.'
+        };
+    }
+
+    if (patternLineIndex < 0) {
+        gameState.centerOfTable.push(...factoryDisplay.filter(tile => tile !== colour));
+        factoryDisplay.splice(0, factoryDisplay.length);
+        addTilesToFloorLine(gameState, player, tiles);
+        return { success: true };
+    }
+
+    const placementResult = canPlaceTileInPatternLine(gameState, player, colour, patternLineIndex);
+    if (!placementResult.success) {
+        return placementResult;
+    }
+
+    gameState.centerOfTable.push(...factoryDisplay.filter(tile => tile !== colour));
+    factoryDisplay.splice(0, factoryDisplay.length);
+    addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
+    return { success: true };
 }
 
 function drawFromCenter(gameState, player, colour, patternLineIndex = -1) {
     // TODO
 }
 
-function canPlaceTileAtTarget(player, colour, patternLineIndex) {
+function canPlaceTileInPatternLine(gameState, player, colour, patternLineIndex) {
+    const x = getXPositionForColourOnLine(gameState, patternLineIndex, colour);
+    if (player.wall[x][patternLineIndex] !== null) {
+        return {
+            success: false,
+            message: 'You already have a tile of that colour in that row.'
+        };
+    }
 
+    const patternLine = player.patternLines[patternLineIndex];
+    if (patternLine.every(tile => tile !== null)) {
+        return {
+            success: false,
+            message: 'That pattern line is already full.'
+        };
+    }
+
+    const [patternLineColour] = player.patternLines[patternLineIndex];
+    if (patternLineColour !== colour && patternLineColour !== null) {
+        return {
+            success: false,
+            message: 'You already have a tile of a different colour in that patternLine.'
+        };
+    }
+
+    return { success: true };
+}
+
+function canMoveTileToWall(gameState, player, patternLineIndex, wallColumnIndex) {
+    const [patternLineColour] = player.patternLines[patternLineIndex];
+    const targetColour = getColourForWallPosition(gameState, wallColumnIndex, patternLineIndex);
+    return patternLineColour === targetColour;
+}
+
+function getColourForWallPosition(gameState, x, y) {
+    return x >= y ? x - y : gameState.rules.numberOfColours + x - y;
+}
+
+function getXPositionForColourOnLine(gameState, y, colour) {
+    const x = colour - y;
+    return x < 0 ? x + gameState.rules.numberOfColours : x;
+}
+
+export function addTilesToPatternLine(gameState, player, patternLine, tiles) {
+    const startIndex = patternLine.indexOf(null);
+    const remainingSpaces = patternLine.length - startIndex;
+    const numberOfTilesToAdd = Math.min(tiles.length, remainingSpaces);
+    const [color] = tiles;
+    for (let i = startIndex; i < numberOfTilesToAdd; i++) {
+        patternLine[i] = color;
+    }
+    addTilesToFloorLine(gameState, player, tiles.slice(numberOfTilesToAdd));
 }
 
 export function addTilesToFloorLine(gameState, player, tiles) {

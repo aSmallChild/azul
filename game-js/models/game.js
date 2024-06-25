@@ -5,7 +5,7 @@ export function createPlayer() {
         patternLines: [],
         wall: [],
         floorLine: [],
-    }
+    };
 }
 
 export function createGameRules() {
@@ -18,7 +18,7 @@ export function createGameRules() {
         columnPoints: 7,
         colourPoints: 10,
         firstPickFromCentre: -1,
-    }
+    };
 }
 
 export function createGameState(rules = createGameRules()) {
@@ -30,5 +30,5 @@ export function createGameState(rules = createGameRules()) {
         centerOfTable: [-1],
         tileBag: [],
         discardedTiles: [],
-    }
+    };
 }
