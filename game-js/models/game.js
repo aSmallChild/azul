@@ -1,5 +1,6 @@
 export function createPlayer() {
     return {
+        index: -1,
         name: '',
         score: 0,
         patternLines: [],
@@ -21,14 +22,26 @@ export function createGameRules() {
     };
 }
 
-export function createGameState(rules = createGameRules()) {
+export function createGameState(params = {}) {
+    const {
+        rules = createGameRules(),
+        emit = () => {}
+    } = params;
+
     return {
         rules,
         players: [],
         currentPlayerIndex: null,
+        nextRoundStartingPlayerIndex: null,
         factoryDisplays: [[]],
         centerOfTable: [-1],
         tileBag: [],
         discardedTiles: [],
+        roundIndex: 0,
+        emit,
+        toJSON() {
+            const { emit, tileBag, ...state } = this;
+            return state;
+        }
     };
 }

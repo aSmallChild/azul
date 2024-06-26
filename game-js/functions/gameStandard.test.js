@@ -1,4 +1,4 @@
-import { addPlayer, addTilesToFloorLine, dealTilesToFactoryDisplays, drawFromFactoryDisplay, fillTileBag } from './gameStandard.js';
+import { addPlayer, addTilesToFloorLine, dealTilesToFactoryDisplays, drawFromCenter, drawFromFactoryDisplay, fillTileBag, scoreRound } from './gameStandard.js';
 import { createGameState, createPlayer } from '../models/game.js';
 import { expect } from 'chai';
 
@@ -27,11 +27,11 @@ describe('Standard game tests', () => {
         });
     });
 
-    describe('drawFromFactoryDisplay', () => {
+    describe('sample game', () => {
         let state;
         state = createGameState();
-        addPlayer(state, createPlayer());
-        addPlayer(state, createPlayer());
+        const player1 = addPlayer(state, createPlayer());
+        const player2 = addPlayer(state, createPlayer());
         state.factoryDisplays = [
             [0, 0, 0, 1],
             [1, 2, 0, 1],
@@ -40,7 +40,6 @@ describe('Standard game tests', () => {
             [3, 3, 0, 2],
         ];
 
-        const [player1, player2] = state.players;
         it('turn 1 - draw tiles from factory display', () => {
             const factoryDisplay = state.factoryDisplays[0];
             const result = drawFromFactoryDisplay(state, factoryDisplay, player1, 0, 2);
@@ -78,6 +77,20 @@ describe('Standard game tests', () => {
             expect(player2.patternLines[4]).to.deep.equal([null, null, null, null, null]);
             expect(player2.floorLine).to.deep.equal([1]);
             expect(state.centerOfTable).to.deep.equal([-1, 1, 2, 0]);
+            expect(state.nextRoundStartingPlayerIndex).to.equal(null);
+        });
+
+        it('turn 3 - draws from center of table', () => {
+            const result = drawFromCenter(state, player1, 2, 1);
+            expect(result.success).to.be.true;
+            expect(player1.patternLines[0]).to.deep.equal([null]);
+            expect(player1.patternLines[1]).to.deep.equal([2, null]);
+            expect(player1.patternLines[2]).to.deep.equal([0, 0, 0]);
+            expect(player1.patternLines[3]).to.deep.equal([null, null, null, null]);
+            expect(player1.patternLines[4]).to.deep.equal([null, null, null, null, null]);
+            expect(player1.floorLine).to.deep.equal([-1]);
+            expect(state.centerOfTable).to.deep.equal([1, 0]);
+            expect(state.nextRoundStartingPlayerIndex).to.equal(0);
         });
     });
 
@@ -120,6 +133,32 @@ describe('Standard game tests', () => {
             expect(player.floorLine).to.deep.equal([0, 1, 2, 3, 4, 5, 6]);
             expect(state.discardedTiles.length).to.equal(3);
             expect(state.discardedTiles).to.deep.equal([7, 8, 9]);
+        });
+    });
+
+    describe('scoreRound', () => {
+        it('adds points for completing colour', () => {
+            const state = createGameState();
+            const player1 = addPlayer(state, createPlayer());
+            player1.patternLines[0] = [1];
+            player1.patternLines[1] = [1, 1];
+            player1.patternLines[2] = [1, 1, 1];
+            player1.patternLines[3] = [1, 1, 1, 1];
+            player1.patternLines[4] = [1, 1, 1, 1, 1];
+            player1.floorLine = [1, 1];
+            const roundScores = scoreRound(state);
+            expect(player1.score).to.equal(5 + 10 - 2);
+            const [playerScores] = roundScores;
+            playerScores.forEach(scores => {
+                if (scores.patternLineIndex === -1) {
+                    expect(scores.floorLinePoints).to.equal(-2);
+                    return;
+                }
+                expect(scores.columnScore).to.equal(0);
+                expect(scores.rowScore).to.equal(1);
+            });
+            expect(playerScores[3].colourScore).to.equal(0);
+            expect(playerScores[4].colourScore).to.equal(10);
         });
     });
 });
