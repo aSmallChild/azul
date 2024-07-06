@@ -3,8 +3,10 @@
 /*@tailwind utilities;*/
 
 :root {
+  --a-border-size: 0.25rem;
   --a-gap: 0.5rem;
-  --a-tile-size: 3rem;
+  --a-tile-slot-size: 3rem;
+  --a-tile-size: 2.75rem;
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -39,7 +41,7 @@ body {
 
 .a-board {
   background-color: #ed9;
-  border: solid 0.25rem #777;
+  border: solid var(--a-border-size) #777;
   display: inline-flex;
 }
 
@@ -61,8 +63,24 @@ body {
 }
 
 .a-tile-slot {
-  border: solid 0.25rem #777;
-  width: 3rem;
-  height: 3rem;
+  border: solid var(--a-border-size) #777;
+  width: var(--a-tile-slot-size);
+  height: var(--a-tile-slot-size);
   background-color: var(--a-tile-slot-colour, #fff);
+}
+
+.a-tiles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.a-tile {
+    position: absolute;
+    display: inline-block;
+    background-color: var(--a-tile-colour, #f00);
+    width: var(--a-tile-size);
+    height: var(--a-tile-size);
+    filter: drop-shadow(2px 3px 5px #1117);
+    border-radius: 3px;
 }
