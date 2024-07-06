@@ -1,4 +1,11 @@
+/*@tailwind base;*/
+/*@tailwind components;*/
+/*@tailwind utilities;*/
+
 :root {
+  --a-gap: 0.5rem;
+  --a-tile-size: 3rem;
+
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -15,22 +22,6 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
 }
 
 @media (prefers-color-scheme: light) {
@@ -44,4 +35,34 @@ h1 {
   button {
     background-color: #f9f9f9;
   }
+}
+
+.a-board {
+  background-color: #ed9;
+  border: solid 0.25rem #777;
+  display: inline-flex;
+}
+
+.a-tile-line {
+  padding-left: var(--a-gap);
+  padding-right: var(--a-gap);
+  gap: var(--a-gap);
+  display: flex;
+  flex: 1;
+  flex-direction: row-reverse;
+}
+
+.a-tile-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a-gap);
+  padding-top: var(--a-gap);
+  padding-bottom: var(--a-gap);
+}
+
+.a-tile-slot {
+  border: solid 0.25rem #777;
+  width: 3rem;
+  height: 3rem;
+  background-color: var(--a-tile-slot-colour, #fff);
 }
