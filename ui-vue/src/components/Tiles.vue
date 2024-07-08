@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { animate } from 'motion'
 
 const gameState = ref({
@@ -16,6 +16,7 @@ const hexColours = [
     { id: 4, hex: '#d90', name: 'yellow' },
 ];
 const draggedTiles = [];
+let currentAnimations = [];
 let tileSpacing = 20;
 
 addTile('asd', 0);
@@ -48,6 +49,16 @@ function addTile(id, colourId) {
 //
 // }
 
+onMounted(() => {
+    document.body.addEventListener('dragover', dragOver);
+    document.body.draggable = false;
+});
+
+onUnmounted(() => {
+    document.body.removeEventListener('dragover', dragOver);
+});
+
+
 async function doThings(event, tile) {
     await animate(tile.element, { x: '50px', y: '50px' }).finished;
     await animate(tile.element, { x: `${event.clientX - 22}px`, y: `${event.clientY - 22}px` }).finished;
@@ -59,7 +70,8 @@ function dragStart(event, tile) {
     draggedTiles.splice(0, draggedTiles.length);
     draggedTiles.push(tile);
     tile.element = tileRefs.value[tile.index];
-    tileSpacing = tile.element.clientWidth / (2.75 / 4)
+    tile.element.style.pointerEvents = 'none';
+    tileSpacing = tile.element.clientWidth / (2.75 / 4);
     tiles.forEach(otherTile => {
         if (otherTile === tile) {
             return;
@@ -67,30 +79,47 @@ function dragStart(event, tile) {
         if (tile.colour === otherTile.colour) {
             otherTile.element = tileRefs.value[otherTile.index];
             draggedTiles.push(otherTile);
+            otherTile.element.style.pointerEvents = 'none';
         }
     });
     event.dataTransfer.setData('text/plain', `${draggedTiles.length} ${tile.colour.name} tile(s)`);
+    event.dataTransfer.setData('application/json', JSON.stringify(
+        draggedTiles.map(tile => ({ id: tile.id, colourId: tile.colour.id, index: tile.index }))
+    ));
+    drag({ x: event.clientX, y: event.clientY, duration: 0.15, timeStamp: event.timeStamp });
+}
+
+function dragOver(event) {
+    drag({ x: event.pageX, y: event.pageY, timeStamp: event.timeStamp });
+}
+
+function dragEnd(event) {
+    draggedTiles.forEach(tile => tile.element.style.pointerEvents = '');
 }
 
 async function drag(event) {
-    const x = event.pageX;
-    const y = event.pageY;
-    draggedTiles.forEach((tile, index) => {
-        const offset = tileSpacing * index;
-        animate(tile.element,
+    const { x, y, duration = 0.05, timeStamp } = event;
+    if (timeStamp < currentAnimations.at(-1)) {
+        return;
+    }
+    await Promise.all(currentAnimations);
+    currentAnimations = draggedTiles.map((tile, index) => {
+        const offset = tileSpacing * index - 20;
+        return animate(tile.element,
             { x: `${x + offset}px`, y: `${y - 22}px` },
-            { duration: 0 }
-        )
+            { duration, easing: 'linear' }
+        ).finished;
     });
+    currentAnimations.push(timeStamp);
 }
 </script>
 
 <template>
-    <div class="a-tiles" @dragover="drag">
+    <div class="a-tiles" @dragover="dragOver">
         <i v-for="tile of tiles" :key="tile.id"
            :data-id="tile.id" ref="tileRefs"
            class="a-tile" :style="`--a-tile-colour: ${tile.colour.hex}`"
-           draggable="true" @dragstart="dragStart($event, tile)"
+           draggable="true" @dragstart="dragStart($event, tile)" @dragend="dragEnd"
         />
     </div>
 </template>
