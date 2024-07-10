@@ -1,23 +1,18 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { inject, onMounted, onUnmounted, ref } from 'vue';
 import { animate } from 'motion'
+import { getColour } from '../util/colours.js';
 
+const game = inject('game');
 const gameState = ref({
     tiles: [],
 });
-
 const tileRefs = ref();
 const tiles = [];
-const hexColours = [
-    { id: 0, hex: '#05c', name: 'blue' },
-    { id: 1, hex: '#3de', name: 'light blue' },
-    { id: 2, hex: '#222', name: 'black' },
-    { id: 3, hex: '#f00', name: 'red' },
-    { id: 4, hex: '#d90', name: 'yellow' },
-];
 const draggedTiles = [];
 let currentAnimations = [];
 let tileSpacing = 20;
+let hasValidDropzone = false;
 
 addTile('asd', 0);
 addTile('asdf', 0);
@@ -28,15 +23,66 @@ addTile('asd6', 2);
 addTile('asdjs', 3);
 addTile('asdjaf', 3);
 
-function getColour(tileColour) {
-    return hexColours?.[tileColour] ?? '#fff';
-}
+game.on('line-drag-enter', async ({ lineIndex, event, getSlotPositions }) => {
+    if (!tilesAllowed()) {
+        return;
+    }
+    hasValidDropzone = true;
+    game.highlightLineIndex.value = lineIndex;
+
+    const duration = 0.15;
+    await Promise.all(currentAnimations);
+    const slotPositions = getSlotPositions(lineIndex);
+    let lastX = event.pageX;
+    let lastY = event.pageY;
+    currentAnimations = draggedTiles.map((tile, index) => {
+        const { x, y } = slotPositions?.[index] ?? { x: lastX, y: lastY };
+        const offset = 5;
+        return animate(tile.element,
+            { x: `${x + offset}px`, y: `${y + offset}px` },
+            { duration, easing: 'linear' }
+        ).finished;
+    });
+    currentAnimations.push(event.timeStamp);
+});
+game.on('line-drag-over', ({ lineIndex, event, getSlotPositions }) => {
+    if (!tilesAllowed()) {
+        event.preventDefault();
+    }
+});
+game.on('line-drag-leave', ({ lineIndex, event, getSlotPositions }) => {
+    game.highlightLineIndex.value = null;
+    hasValidDropzone = false;
+});
+game.on('line-drop', ({ lineIndex, event, getSlotPositions }) => {
+    game.highlightLineIndex.value = null;
+    hasValidDropzone = false;
+});
+
+onMounted(() => {
+    document.body.addEventListener('dragover', dragOver);
+    document.body.draggable = false;
+});
+
+onUnmounted(() => {
+    document.body.removeEventListener('dragover', dragOver);
+});
+
 
 function addTile(id, colourId) {
     tiles.push({
         id, colour: getColour(colourId), index: tiles.length,
         element: null
     });
+}
+
+function tilesAllowed() {
+    return true;
+    // if (!draggedTiles.length) {
+    //     return false;
+    // }
+    //
+    // return draggedTiles[0].colour.id === 3;
 }
 
 // function addTile(colour, location = {
@@ -48,16 +94,6 @@ function addTile(id, colourId) {
 // }) {
 //
 // }
-
-onMounted(() => {
-    document.body.addEventListener('dragover', dragOver);
-    document.body.draggable = false;
-});
-
-onUnmounted(() => {
-    document.body.removeEventListener('dragover', dragOver);
-});
-
 
 async function doThings(event, tile) {
     await animate(tile.element, { x: '50px', y: '50px' }).finished;
@@ -90,6 +126,9 @@ function dragStart(event, tile) {
 }
 
 function dragOver(event) {
+    if (hasValidDropzone) {
+        return;
+    }
     drag({ x: event.pageX, y: event.pageY, timeStamp: event.timeStamp });
 }
 
