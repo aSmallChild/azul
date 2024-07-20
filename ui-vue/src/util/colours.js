@@ -4,6 +4,8 @@ export const hexColours = [
     { id: 2, hex: '#222', name: 'black' },
     { id: 3, hex: '#f00', name: 'red' },
     { id: 4, hex: '#d90', name: 'yellow' },
+    { id: 4, hex: '#9d1', name: 'light green' },
+    { id: 4, hex: '#160', name: 'green' },
 ];
 
 export function getHexColour(colourId) {

@@ -138,7 +138,7 @@ function canMoveTileToWall(gameState, player, patternLineIndex, wallColumnIndex)
     return patternLineColour === targetColour;
 }
 
-function getColourForWallPosition(gameState, x, y) {
+export function getColourForWallPosition(gameState, x, y) {
     return x >= y ? x - y : gameState.rules.numberOfColours + x - y;
 }
 

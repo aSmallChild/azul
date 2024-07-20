@@ -53,7 +53,12 @@ body {
   gap: var(--a-gap);
   display: flex;
   flex: 1;
-  flex-direction: row-reverse;
+}
+
+.a-pattern-lines {
+    .a-tile-line {
+        flex-direction: row-reverse;
+    }
 }
 
 .a-tile-lines {

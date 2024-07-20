@@ -1,7 +1,7 @@
-export function createPlayer() {
+export function createPlayer(params) {
     return {
         index: -1,
-        name: '',
+        name: params?.name ?? '',
         score: 0,
         patternLines: [],
         wall: [],

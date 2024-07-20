@@ -23,12 +23,12 @@ addTile('asd6', 2);
 addTile('asdjs', 3);
 addTile('asdjaf', 3);
 
-game.on('line-drag-enter', async ({ lineIndex, event, getSlotPositions }) => {
+game.on('line-drag-enter', async ({ lineIndex, playerIndex, event, getSlotPositions }) => {
     if (!isDragging() || !tilesAllowed()) {
         return;
     }
     hasValidDropzone = true;
-    game.highlightLineIndex.value = lineIndex;
+    game.highlight.value = { lineIndex, playerIndex };
     const duration = 0.15;
     await Promise.all(currentAnimations);
     const slotPositions = getSlotPositions(lineIndex);
@@ -56,14 +56,14 @@ game.on('line-drag-leave', ({ lineIndex, event, getSlotPositions }) => {
     if (!isDragging()) {
         return;
     }
-    game.highlightLineIndex.value = null;
+    game.highlight.value = null;
     hasValidDropzone = false;
 });
 game.on('line-drop', ({ lineIndex, event, getSlotPositions }) => {
     if (!isDragging()) {
         return;
     }
-    game.highlightLineIndex.value = null;
+    game.highlight.value = null;
     hasValidDropzone = false;
     dragEnd(event);
 });
@@ -82,7 +82,7 @@ function isDragging() {
 }
 
 function mouseLeaveWindow(event) {
-    if (event.relatedTarget?.nodeName === "HTML") {
+    if (event.relatedTarget?.nodeName === 'HTML') {
         dragEnd(event);
     }
 }

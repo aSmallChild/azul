@@ -1,37 +1,39 @@
 <script setup>
 import { inject, ref, watch } from 'vue';
 import { getHexColour } from '../util/colours.js';
+import { getColourForWallPosition } from 'azul/functions/gameStandard.js';
 
+const props = defineProps({
+    player: {
+        type: Object,
+        required: true
+    }
+});
 const game = inject('game');
 const patternLineRefs = ref(null);
 const wallLineRefs = ref(null);
 const floorLineRef = ref(null);
-const patternLines = [
-    [1],
-    [1, 1],
-    [1, 1, 1],
-    [1, 1, 1, 1],
-    [1, 1, 1, 1, 1],
-];
-const wall = [
-    [1, 2, 3, 4, 0],
-    [2, 3, 4, 0, 1],
-    [3, 4, 0, 1, 2],
-    [4, 0, 1, 2, 3],
-    [0, 1, 2, 3, 4],
-];
-const floorLine = [-1, -1, -2, -2, -2, -2, -3, -3];
+const { numberOfColours } = game.state.rules;
+const patternLines = Array.from({ length: numberOfColours },
+    (_, i) => Array.from({ length: i + 1 }, () => 1)
+);
+
+const wall = Array.from({ length: numberOfColours },
+    (_, x) => Array.from({ length: numberOfColours }, (_, y) => getColourForWallPosition(game.state, x, y))
+);
+
+const floorLine = game.state.rules.floorLinePenalties;
 
 const vTileLine = {
     mounted(element, binding) {
         const lineIndex = binding.value;
-        watch(() => game.highlightLineIndex.value, newIndex => {
-           if (newIndex === lineIndex) {
-               element.classList.add('a-dropzone');
-           }
-           else {
-               element.classList.remove('a-dropzone');
-           }
+        watch(() => game.highlight.value, newValue => {
+            if (newValue?.playerIndex === props.player.index && newValue?.lineIndex === lineIndex) {
+                element.classList.add('a-dropzone');
+            }
+            else {
+                element.classList.remove('a-dropzone');
+            }
         });
         element.addEventListener('dragenter', event => {
             event.stopPropagation();
@@ -67,19 +69,19 @@ function getLineRef(lineIndex, isWall) {
 }
 
 function emitDragEvent(eventName, lineIndex, event) {
-    game.emit(eventName, { lineIndex, event, getSlotPositions });
+    game.emit(eventName, { playerIndex: props.player.index, lineIndex, event, getSlotPositions });
 }
 </script>
 
 <template>
     <div class="a-board" style="display: inline-flex; flex-direction: column">
         <div style="display: flex">
-            <div class="a-tile-lines">
+            <div class="a-tile-lines a-pattern-lines">
                 <div class="a-tile-line" v-for="(line, lineIndex) of patternLines" ref="patternLineRefs" v-tile-line="lineIndex">
                     <div class="a-tile-slot" v-for="_ of line"></div>
                     <div v-if="lineIndex === 0" style="color: #300; flex: 1">
-                        PLAYER NAME<br>
-                        SCORE: 0
+                        {{ player.name }}<br>
+                        SCORE: {{ player.score }}
                     </div>
                 </div>
             </div>
