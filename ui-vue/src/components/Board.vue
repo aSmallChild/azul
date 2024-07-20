@@ -33,15 +33,15 @@ const vTileLine = {
                element.classList.remove('a-dropzone');
            }
         });
-        element.addEventListener('mouseover', event => {
+        element.addEventListener('dragenter', event => {
             event.stopPropagation();
             emitDragEvent('line-drag-enter', lineIndex, event);
         });
-        element.addEventListener('mouseout', event => {
+        element.addEventListener('dragleave', event => {
             event.stopPropagation();
             emitDragEvent('line-drag-leave', lineIndex, event);
         });
-        element.addEventListener('mouseup', event => {
+        element.addEventListener('drop', event => {
             event.stopPropagation();
             emitDragEvent('line-drop', lineIndex, event);
         });

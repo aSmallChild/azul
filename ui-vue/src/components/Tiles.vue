@@ -71,23 +71,10 @@ game.on('line-drop', ({ lineIndex, event, getSlotPositions }) => {
 onMounted(() => {
     document.body.addEventListener('dragover', dragOver);
     document.body.draggable = false;
-    document.body.addEventListener('mousemove', dragOver);
-    document.body.addEventListener('touchmove', dragOver);
-    document.body.addEventListener('mouseup', (event) => {
-        dragEnd(event)
-    });
-    document.body.addEventListener('mouseout', mouseLeaveWindow);
-    document.body.addEventListener('touchcancel', dragEnd);
-    document.body.addEventListener('touchend', dragEnd);
 });
 
 onUnmounted(() => {
-    document.body.removeEventListener('mousemove', dragOver);
-    document.body.removeEventListener('touchmove', dragOver);
-    document.body.removeEventListener('mouseup', dragEnd);
-    document.body.removeEventListener('mouseout', mouseLeaveWindow);
-    document.body.removeEventListener('touchcancel', dragEnd);
-    document.body.removeEventListener('touchend', dragEnd);
+    document.body.removeEventListener('dragover', dragOver);
 });
 
 function isDragging() {

@@ -97,3 +97,9 @@ body {
     gap: var(--a-gap);
     flex-direction: row;
 }
+
+.a-floor-line {
+    div {
+        pointer-events: none;
+    }
+}
