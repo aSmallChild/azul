@@ -89,3 +89,11 @@ body {
 .a-dropzone {
     background-color: #f0fa;
 }
+
+.a-floor-line {
+    padding: var(--a-gap);
+    color: black;
+    display: flex;
+    gap: var(--a-gap);
+    flex-direction: row;
+}

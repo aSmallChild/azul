@@ -24,12 +24,11 @@ addTile('asdjs', 3);
 addTile('asdjaf', 3);
 
 game.on('line-drag-enter', async ({ lineIndex, event, getSlotPositions }) => {
-    if (!tilesAllowed()) {
+    if (!isDragging() || !tilesAllowed()) {
         return;
     }
     hasValidDropzone = true;
     game.highlightLineIndex.value = lineIndex;
-
     const duration = 0.15;
     await Promise.all(currentAnimations);
     const slotPositions = getSlotPositions(lineIndex);
@@ -46,28 +45,60 @@ game.on('line-drag-enter', async ({ lineIndex, event, getSlotPositions }) => {
     currentAnimations.push(event.timeStamp);
 });
 game.on('line-drag-over', ({ lineIndex, event, getSlotPositions }) => {
+    if (!isDragging()) {
+        return;
+    }
     if (!tilesAllowed()) {
         event.preventDefault();
     }
 });
 game.on('line-drag-leave', ({ lineIndex, event, getSlotPositions }) => {
+    if (!isDragging()) {
+        return;
+    }
     game.highlightLineIndex.value = null;
     hasValidDropzone = false;
 });
 game.on('line-drop', ({ lineIndex, event, getSlotPositions }) => {
+    if (!isDragging()) {
+        return;
+    }
     game.highlightLineIndex.value = null;
     hasValidDropzone = false;
+    dragEnd(event);
 });
 
 onMounted(() => {
     document.body.addEventListener('dragover', dragOver);
     document.body.draggable = false;
+    document.body.addEventListener('mousemove', dragOver);
+    document.body.addEventListener('touchmove', dragOver);
+    document.body.addEventListener('mouseup', (event) => {
+        dragEnd(event)
+    });
+    document.body.addEventListener('mouseout', mouseLeaveWindow);
+    document.body.addEventListener('touchcancel', dragEnd);
+    document.body.addEventListener('touchend', dragEnd);
 });
 
 onUnmounted(() => {
-    document.body.removeEventListener('dragover', dragOver);
+    document.body.removeEventListener('mousemove', dragOver);
+    document.body.removeEventListener('touchmove', dragOver);
+    document.body.removeEventListener('mouseup', dragEnd);
+    document.body.removeEventListener('mouseout', mouseLeaveWindow);
+    document.body.removeEventListener('touchcancel', dragEnd);
+    document.body.removeEventListener('touchend', dragEnd);
 });
 
+function isDragging() {
+    return draggedTiles.length > 0;
+}
+
+function mouseLeaveWindow(event) {
+    if (event.relatedTarget?.nodeName === "HTML") {
+        dragEnd(event);
+    }
+}
 
 function addTile(id, colourId) {
     tiles.push({
@@ -78,7 +109,7 @@ function addTile(id, colourId) {
 
 function tilesAllowed() {
     return true;
-    // if (!draggedTiles.length) {
+    // if (!isDragging()) {
     //     return false;
     // }
     //
@@ -126,14 +157,20 @@ function dragStart(event, tile) {
 }
 
 function dragOver(event) {
-    if (hasValidDropzone) {
+    if (hasValidDropzone || !isDragging()) {
         return;
     }
     drag({ x: event.pageX, y: event.pageY, timeStamp: event.timeStamp });
 }
 
 function dragEnd(event) {
+    if (!isDragging()) {
+        return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
     draggedTiles.forEach(tile => tile.element.style.pointerEvents = '');
+    draggedTiles.splice(0, draggedTiles.length);
 }
 
 async function drag(event) {
