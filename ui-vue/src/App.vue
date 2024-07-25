@@ -4,6 +4,7 @@ import Tiles from './components/Tiles.vue';
 import { provide, ref } from 'vue';
 import { addPlayer } from 'azul/functions/gameStandard.js';
 import { createGameState, createPlayer } from 'azul/models/game.js';
+import FactoryDisplay from './components/FactoryDisplay.vue';
 
 const highlight = ref({ });
 const game = {
@@ -39,4 +40,7 @@ provide('game', game);
 <template>
     <tiles/>
     <board v-for="player of game.state.players" :player="player"/>
+    <div style="display: flex; gap: var(--a-gap); margin: var(--a-gap)">
+        <factory-display :size="4" v-for="_ in game.state.factoryDisplays.length"></factory-display>
+    </div>
 </template>

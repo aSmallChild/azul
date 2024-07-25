@@ -2,6 +2,7 @@
 import { inject, ref, watch } from 'vue';
 import { getHexColour } from '../util/colours.js';
 import { getColourForWallPosition } from 'azul/functions/gameStandard.js';
+import { getSlotPositions } from '../util/slots.js';
 
 const props = defineProps({
     player: {
@@ -50,14 +51,9 @@ const vTileLine = {
     }
 }
 
-function getSlotPositions(lineIndex, isWall = false) {
+function getSlotPositionsFromLine(lineIndex, isWall = false) {
     const line = getLineRef(lineIndex, isWall);
-    const positions = [];
-    for (const slot of line.children) {
-        const rect = slot.getBoundingClientRect();
-        positions.push({ x: rect.left, y: rect.top });
-    }
-    return positions;
+    return getSlotPositions(line.children);
 }
 
 function getLineRef(lineIndex, isWall) {
@@ -69,7 +65,7 @@ function getLineRef(lineIndex, isWall) {
 }
 
 function emitDragEvent(eventName, lineIndex, event) {
-    game.emit(eventName, { playerIndex: props.player.index, lineIndex, event, getSlotPositions });
+    game.emit(eventName, { playerIndex: props.player.index, lineIndex, event, getSlotPositions: getSlotPositionsFromLine });
 }
 </script>
 
