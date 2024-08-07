@@ -1,12 +1,13 @@
 <script setup>
 import Board from './components/Board.vue';
 import Tiles from './components/Tiles.vue';
-import { provide, ref } from 'vue';
-import { addPlayer } from 'azul/functions/gameStandard.js';
+import { provide, ref, onMounted } from 'vue';
+import { addPlayer, dealTilesToFactoryDisplays, fillTileBag } from 'azul/functions/gameStandard.js';
 import { createGameState, createPlayer } from 'azul/models/game.js';
 import FactoryDisplay from './components/FactoryDisplay.vue';
 
-const highlight = ref({ });
+const highlight = ref({});
+const factoryDisplays = ref();
 const game = {
     state: createGameState(),
     highlight,
@@ -17,7 +18,7 @@ const game = {
                 handler(data);
             }
             catch (e) {
-                console.error('Event handler error', e);
+                console.error('Event handler error', eventName, e, handler, data);
             }
         })
     },
@@ -29,10 +30,12 @@ const game = {
     }
 };
 
-addPlayer(game.state, createPlayer({name: 'PLAYER ONE'}));
-addPlayer(game.state, createPlayer({name: 'PLAYER 2'}));
-addPlayer(game.state, createPlayer({name: 'PLAYER THREE'}));
-addPlayer(game.state, createPlayer({name: 'Bob'}));
+addPlayer(game.state, createPlayer({ name: 'PLAYER ONE' }));
+addPlayer(game.state, createPlayer({ name: 'PLAYER 2' }));
+addPlayer(game.state, createPlayer({ name: 'PLAYER THREE' }));
+addPlayer(game.state, createPlayer({ name: 'Bob' }));
+fillTileBag(game.state);
+dealTilesToFactoryDisplays(game.state);
 
 provide('game', game);
 </script>
@@ -41,6 +44,10 @@ provide('game', game);
     <tiles/>
     <board v-for="player of game.state.players" :player="player"/>
     <div style="display: flex; gap: var(--a-gap); margin: var(--a-gap)">
-        <factory-display :size="4" v-for="_ in game.state.factoryDisplays.length"></factory-display>
+        <factory-display
+            v-for="_ in game.state.factoryDisplays.length"
+            ref="factoryDisplays"
+            :size="game.state.rules.tilesPerFactoryDisplay"
+        />
     </div>
 </template>

@@ -2,11 +2,9 @@
 import { inject, onMounted, onUnmounted, ref } from 'vue';
 import { animate } from 'motion'
 import { getColour } from '../util/colours.js';
+import Tile from 'azul/models/tile.js';
 
 const game = inject('game');
-const gameState = ref({
-    tiles: [],
-});
 const tileRefs = ref();
 const tiles = [];
 const draggedTiles = [];
@@ -37,7 +35,7 @@ game.on('line-drag-enter', async ({ lineIndex, playerIndex, event, getSlotPositi
     currentAnimations = draggedTiles.map((tile, index) => {
         const { x, y } = slotPositions?.[index] ?? { x: lastX, y: lastY };
         const offset = 5;
-        return animate(tile.element,
+        return animate(tile.meta.element,
             { x: `${x + offset}px`, y: `${y + offset}px` },
             { duration, easing: 'linear' }
         ).finished;
@@ -88,10 +86,9 @@ function mouseLeaveWindow(event) {
 }
 
 function addTile(id, colourId) {
-    tiles.push({
-        id, colour: getColour(colourId), index: tiles.length,
-        element: null
-    });
+    tiles.push(new Tile(id, colourId, {
+        colour: getColour(colourId), index: tiles.length, element: null
+    }));
 }
 
 function tilesAllowed() {
@@ -123,22 +120,22 @@ function dragStart(event, tile) {
     event.dataTransfer.setDragImage(document.createElement('div'), 0, 0);
     draggedTiles.splice(0, draggedTiles.length);
     draggedTiles.push(tile);
-    tile.element = tileRefs.value[tile.index];
-    tile.element.style.pointerEvents = 'none';
-    tileSpacing = tile.element.clientWidth / (2.75 / 4);
+    tile.meta.element = tileRefs.value[tile.meta.index];
+    tile.meta.element.style.pointerEvents = 'none';
+    tileSpacing = tile.meta.element.clientWidth / (2.75 / 4);
     tiles.forEach(otherTile => {
-        if (otherTile === tile) {
+        if (otherTile.id === tile.id) {
             return;
         }
-        if (tile.colour === otherTile.colour) {
-            otherTile.element = tileRefs.value[otherTile.index];
+        if (tile.colourId === otherTile.colourId) {
+            otherTile.meta.element = tileRefs.value[otherTile.meta.index];
             draggedTiles.push(otherTile);
-            otherTile.element.style.pointerEvents = 'none';
+            otherTile.meta.element.style.pointerEvents = 'none';
         }
     });
-    event.dataTransfer.setData('text/plain', `${draggedTiles.length} ${tile.colour.name} tile(s)`);
+    event.dataTransfer.setData('text/plain', `${draggedTiles.length} ${tile.meta.colour.name} tile(s)`);
     event.dataTransfer.setData('application/json', JSON.stringify(
-        draggedTiles.map(tile => ({ id: tile.id, colourId: tile.colour.id, index: tile.index }))
+        draggedTiles.map(tile => ({ id: tile.id, colourId: tile.colourId, index: tile.meta.index }))
     ));
     drag({ x: event.clientX, y: event.clientY, duration: 0.15, timeStamp: event.timeStamp });
 }
@@ -156,7 +153,7 @@ function dragEnd(event) {
     }
     event.preventDefault();
     event.stopPropagation();
-    draggedTiles.forEach(tile => tile.element.style.pointerEvents = '');
+    draggedTiles.forEach(tile => tile.meta.element.style.pointerEvents = '');
     draggedTiles.splice(0, draggedTiles.length);
 }
 
@@ -168,7 +165,7 @@ async function drag(event) {
     await Promise.all(currentAnimations);
     currentAnimations = draggedTiles.map((tile, index) => {
         const offset = tileSpacing * index - 20;
-        return animate(tile.element,
+        return animate(tile.meta.element,
             { x: `${x + offset}px`, y: `${y - 22}px` },
             { duration, easing: 'linear' }
         ).finished;
@@ -181,7 +178,7 @@ async function drag(event) {
     <div class="a-tiles" @dragover="dragOver">
         <i v-for="tile of tiles" :key="tile.id"
            :data-id="tile.id" ref="tileRefs"
-           class="a-tile" :style="`--a-tile-colour: ${tile.colour.hex}`"
+           class="a-tile" :style="`--a-tile-colour: ${tile.meta.colour.hex}`"
            draggable="true" @dragstart="dragStart($event, tile)" @dragend="dragEnd"
         />
     </div>

@@ -1,16 +1,15 @@
 <script setup>
 import { getSlotPositions } from '../util/slots.js';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
-const display = ref();
 const props = defineProps({
     size: {
         type: Number,
         required: true,
     }
 });
-
-const slotWidth = Math.ceil(Math.sqrt(props.size))
+const display = ref();
+const slotWidth = computed(() => Math.ceil(Math.sqrt(props.size)));
 
 defineExpose({
     getSlotPositions() {

@@ -92,6 +92,7 @@ body {
     height: var(--a-tile-size);
     filter: drop-shadow(2px 3px 5px #1117);
     border-radius: 3px;
+    z-index: 1;
 }
 
 .a-dropzone {
@@ -121,6 +122,7 @@ body {
     display: inline-block;
     width: var(--a-size);
     height: var(--a-size);
+    min-width: var(--a-size);
 
     > div {
         display: flex;

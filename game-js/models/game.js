@@ -14,6 +14,7 @@ export function createGameRules() {
     return {
         numberOfColours,
         tilesPerColour: numberOfColours * 4,
+        tilesPerFactoryDisplay: 4,
         floorLinePenalties: [-1, -1, -2, -2, -2, -3, -3],
         rowPoints: 2,
         columnPoints: 7,
