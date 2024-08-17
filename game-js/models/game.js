@@ -1,7 +1,9 @@
+import { createTile } from './tile.js';
+
 export function createPlayer(params) {
     return {
         index: -1,
-        name: params?.name ?? '',
+        name: params?.name ?? 'UNNAMED PLAYER',
         score: 0,
         patternLines: [],
         wall: [],
@@ -35,7 +37,7 @@ export function createGameState(params = {}) {
         currentPlayerIndex: null,
         nextRoundStartingPlayerIndex: null,
         factoryDisplays: [[]],
-        centerOfTable: [-1],
+        centerOfTable: [createTile(1, -1)],
         tileBag: [],
         discardedTiles: [],
         roundIndex: 0,

@@ -4,4 +4,15 @@ export default class Tile {
         this.colourId = colourId;
         this.meta = meta;
     }
+
+    toJSON() {
+        return {
+            id: this.id,
+            colourId: this.colourId
+        }
+    }
+}
+
+export function createTile() {
+    return new Tile(...arguments);
 }

@@ -1,3 +1,5 @@
+import { createTile } from '../models/tile.js';
+
 function setNextPlayer(gameState) {
     gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
 }
@@ -30,20 +32,20 @@ export function addPlayer(gameState, player) {
     return player;
 }
 
-export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colour, patternLineIndex = -1) {
-    const { tiles = null, ...drawResult } = canDrawFromLocation(factoryDisplay, colour, 'that factory display');
+export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colourId, patternLineIndex = -1) {
+    const { tiles = null, ...drawResult } = canDrawFromLocation(factoryDisplay, colourId, 'that factory display');
     if (!drawResult.success) {
         return drawResult;
     }
 
     if (patternLineIndex >= 0) {
-        const placementResult = canPlaceTileInPatternLine(gameState, player, colour, patternLineIndex);
+        const placementResult = canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex);
         if (!placementResult.success) {
             return placementResult;
         }
     }
 
-    gameState.centerOfTable = gameState.centerOfTable.concat(factoryDisplay.filter(tile => tile !== colour));
+    gameState.centerOfTable = gameState.centerOfTable.concat(factoryDisplay.filter(tile => tile.colourId !== colourId));
     factoryDisplay.splice(0, factoryDisplay.length);
     if (patternLineIndex < 0) {
         addTilesToFloorLine(gameState, player, tiles);
@@ -55,26 +57,26 @@ export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colour
     return { success: true };
 }
 
-export function drawFromCenter(gameState, player, colour, patternLineIndex = -1) {
+export function drawFromCenter(gameState, player, colourId, patternLineIndex = -1) {
     const center = gameState.centerOfTable;
-    const { tiles = null, ...drawResult } = canDrawFromLocation(center, colour, 'in the center of the table');
+    const { tiles = null, ...drawResult } = canDrawFromLocation(center, colourId, 'in the center of the table');
     if (!drawResult.success) {
         return drawResult;
     }
 
     if (patternLineIndex >= 0) {
-        const placementResult = canPlaceTileInPatternLine(gameState, player, colour, patternLineIndex);
+        const placementResult = canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex);
         if (!placementResult.success) {
             return placementResult;
         }
     }
 
-    if (center[0] === -1) {
+    if (center[0].colourId === -1) {
         addTilesToFloorLine(gameState, player, [center.shift()]);
         gameState.nextRoundStartingPlayerIndex = player.index;
     }
 
-    gameState.centerOfTable = center.filter(tile => tile !== colour);
+    gameState.centerOfTable = center.filter(tile => tile.colourId !== colourId);
     if (patternLineIndex < 0) {
         addTilesToFloorLine(gameState, player, tiles);
     }
@@ -85,7 +87,7 @@ export function drawFromCenter(gameState, player, colour, patternLineIndex = -1)
     return { success: true };
 }
 
-function canDrawFromLocation(availableTiles, colourToDraw, locationName) {
+function canDrawFromLocation(availableTiles, colourIdToDraw, locationName) {
     if (!availableTiles.length) {
         return {
             success: false,
@@ -93,7 +95,7 @@ function canDrawFromLocation(availableTiles, colourToDraw, locationName) {
         };
     }
 
-    const tiles = availableTiles.filter(tile => tile === colourToDraw);
+    const tiles = availableTiles.filter(tile => tile.colourId === colourIdToDraw);
     if (!tiles.length) {
         return {
             success: false,
@@ -104,8 +106,8 @@ function canDrawFromLocation(availableTiles, colourToDraw, locationName) {
     return { success: true, tiles };
 }
 
-function canPlaceTileInPatternLine(gameState, player, colour, patternLineIndex) {
-    const x = getXPositionForColourOnLine(gameState, patternLineIndex, colour);
+function canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex) {
+    const x = getXPositionForColourOnLine(gameState, patternLineIndex, colourId);
     if (player.wall[x][patternLineIndex] !== null) {
         return {
             success: false,
@@ -114,15 +116,15 @@ function canPlaceTileInPatternLine(gameState, player, colour, patternLineIndex) 
     }
 
     const patternLine = player.patternLines[patternLineIndex];
-    if (patternLine.every(tile => tile !== null)) {
+    if (patternLine.every(tile => tile)) {
         return {
             success: false,
             message: 'That pattern line is already full.'
         };
     }
 
-    const [patternLineColour] = player.patternLines[patternLineIndex];
-    if (patternLineColour !== colour && patternLineColour !== null) {
+    const [firstTile] = player.patternLines[patternLineIndex];
+    if (firstTile && firstTile.colourId !== colourId) {
         return {
             success: false,
             message: 'You already have a tile of a different colour in that patternLine.'
@@ -133,17 +135,17 @@ function canPlaceTileInPatternLine(gameState, player, colour, patternLineIndex) 
 }
 
 function canMoveTileToWall(gameState, player, patternLineIndex, wallColumnIndex) {
-    const [patternLineColour] = player.patternLines[patternLineIndex];
-    const targetColour = getColourForWallPosition(gameState, wallColumnIndex, patternLineIndex);
-    return patternLineColour === targetColour;
+    const [patternLineTile] = player.patternLines[patternLineIndex];
+    const targetColourId = getColourForWallPosition(gameState, wallColumnIndex, patternLineIndex);
+    return patternLineTile?.colourId === targetColourId;
 }
 
 export function getColourForWallPosition(gameState, x, y) {
     return x >= y ? x - y : gameState.rules.numberOfColours + x - y;
 }
 
-function getXPositionForColourOnLine(gameState, y, colour) {
-    const x = colour - y;
+function getXPositionForColourOnLine(gameState, y, colourId) {
+    const x = colourId - y;
     return x < 0 ? x + gameState.rules.numberOfColours : x;
 }
 
@@ -151,11 +153,10 @@ export function addTilesToPatternLine(gameState, player, patternLine, tiles) {
     const startIndex = patternLine.indexOf(null);
     const remainingSpaces = patternLine.length - startIndex;
     const numberOfTilesToAdd = Math.min(tiles.length, remainingSpaces);
-    const [color] = tiles;
     for (let i = startIndex; i < numberOfTilesToAdd; i++) {
-        patternLine[i] = color;
+        patternLine[i] = tiles.shift();
     }
-    addTilesToFloorLine(gameState, player, tiles.slice(numberOfTilesToAdd));
+    addTilesToFloorLine(gameState, player, tiles);
 }
 
 export function addTilesToFloorLine(gameState, player, tiles) {
@@ -164,8 +165,17 @@ export function addTilesToFloorLine(gameState, player, tiles) {
     gameState.discardedTiles = gameState.discardedTiles.concat(tiles.slice(numberOfTilesToAdd));
 }
 
+export function shiftStartTileToCenter(gameState) {
+    for (const player of gameState.players) {
+        const index = player.floorLine.findIndex(tile => tile.colourId === -1);
+        if (index < 0) {
+            gameState.centerOfTable.push(...player.floorLine.splice(index, 1));
+            return;
+        }
+    }
+}
+
 export function dealTilesToFactoryDisplays(gameState) {
-    gameState.centerOfTable = [-1];
     const tilesPerFactoryDisplay = gameState.rules.numberOfColours - 1;
     for (let i = 0; i < gameState.factoryDisplays.length; i++) {
         gameState.factoryDisplays[i] = gameState.tileBag.splice(0, tilesPerFactoryDisplay);
@@ -272,10 +282,10 @@ export function countPlayerScores(gameState, player) {
         playerScores.push({ floorLinePoints, patternLineIndex: -1 });
         const tiles = player.floorLine.filter(colour => colour !== -1);
         gameState.discardedTiles = gameState.discardedTiles.concat(tiles);
-        const returnStartTile = player.floorLine.includes(-1);
+        const startTile = player.floorLine.find(tile => tile.colourId === -1);
         player.floorLine = [];
-        if (returnStartTile) {
-            gameState.centerOfTable = [-1];
+        if (startTile) {
+            gameState.centerOfTable = [startTile];
             gameState.emit('start-tile-returned', { player, centerOfTable: gameState.centerOfTable, patternLineIndex: -1, discardedTiles: [-1] });
         }
         if (tiles.length) {
@@ -333,9 +343,9 @@ function scoreNewTile(gameState, player, colour, x, y) {
 
 export function fillTileBag(gameState) {
     const { rules } = gameState;
-    for (let i = 0; i < rules.numberOfColours; i++) {
+    for (let colourId = 0; colourId < rules.numberOfColours; colourId++) {
         for (let j = 0; j < rules.tilesPerColour; j++) {
-            gameState.tileBag.push(i);
+            gameState.tileBag.push(createTile(gameState.tileBag.length + 1, colourId));
         }
     }
     shuffleTiles(gameState.tileBag);
