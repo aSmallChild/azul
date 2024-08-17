@@ -253,14 +253,14 @@ export function countPlayerScores(gameState, player) {
     const playerScores = [];
     for (let y = 0; y < player.patternLines.length; y++) {
         const line = player.patternLines[y];
-        const colour = line.at(-1);
-        if (colour === null) {
+        const lastTile = line.at(-1) ?? null;
+        if (lastTile === null) {
             continue;
         }
 
-        const x = getXPositionForColourOnLine(gameState, y, colour);
-        player.wall[x][y] = colour;
-        const scores = scoreNewTile(gameState, player, colour, x, y);
+        const x = getXPositionForColourOnLine(gameState, y, lastTile.colourId);
+        player.wall[x][y] = lastTile;
+        const scores = scoreNewTile(gameState, player, lastTile, x, y);
         player.score += scores.rowScore + scores.columnScore + scores.colourScore;
         line[0] = null;
         const tilesToDiscard = line.filter(e => e !== null);
@@ -313,7 +313,7 @@ function countTile(isScored, tile, isReached) {
     return [1, false];
 }
 
-function scoreNewTile(gameState, player, colour, x, y) {
+function scoreNewTile(gameState, player, tile, x, y) {
     const { numberOfColours } = gameState.rules;
     let rowScore = 0, columnScore = 0, colourScore = 0;
     let rowScored = false, columnScored = false;
@@ -324,7 +324,7 @@ function scoreNewTile(gameState, player, colour, x, y) {
         const [columnTileScore, finishedScoringColumn] = countTile(columnScored, player.wall[i][y], i >= x);
         columnScore = columnTileScore === -1 ? 0 : columnScore + columnTileScore;
         columnScored = finishedScoringColumn;
-        const colourX = getXPositionForColourOnLine(gameState, i, colour);
+        const colourX = getXPositionForColourOnLine(gameState, i, tile.colourId);
         if (player.wall[colourX][i]) {
             colourScore++;
         }
