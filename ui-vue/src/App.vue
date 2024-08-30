@@ -8,6 +8,7 @@ import FactoryDisplay from './components/FactoryDisplay.vue';
 
 const highlight = ref({});
 const factoryDisplays = ref();
+const tiles = ref();
 const game = {
     state: createGameState(),
     highlight,
@@ -38,10 +39,27 @@ fillTileBag(game.state);
 dealTilesToFactoryDisplays(game.state);
 
 provide('game', game);
+
+onMounted(() => {
+    factoryDisplays.value.forEach((display, displayIndex) => {
+        const slotPositions = display.getSlotPositions()
+        slotPositions.forEach((position, slotIndex) => {
+            const tile = game.state.factoryDisplays[displayIndex][slotIndex];
+            if (!tile) {
+                return;
+            }
+
+            tiles.value.setTile(tile, {
+                position
+            })
+        });
+
+    });
+});
 </script>
 
 <template>
-    <tiles/>
+    <tiles ref="tiles"/>
     <board v-for="player of game.state.players" :player="player"/>
     <div style="display: flex; gap: var(--a-gap); margin: var(--a-gap)">
         <factory-display
