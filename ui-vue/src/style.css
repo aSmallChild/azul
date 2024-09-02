@@ -77,7 +77,7 @@ body {
     border: solid var(--a-border-size) var(--a-border-colour);
     width: var(--a-tile-slot-size);
     height: var(--a-tile-slot-size);
-    background-color: var(--a-tile-slot-colour, #fff);
+    background-color: var(--a-tile-slot-colour, #fff7);
 }
 
 .a-tiles {
@@ -87,10 +87,16 @@ body {
 .a-tile {
     position: absolute;
     display: inline-block;
-    background-color: var(--a-tile-colour, #f00);
+    background-color: var(--a-tile-colour, #f007);
     width: var(--a-tile-size);
     height: var(--a-tile-size);
     filter: drop-shadow(2px 3px 5px #1117);
+    color: #000;
+    font-weight: bold;
+    font-style: normal;
+    font-size: 25px;
+    text-align: center;
+    align-content: center;
     border-radius: 3px;
     z-index: 1;
 }
@@ -101,7 +107,7 @@ body {
 
 .a-floor-line {
     padding: var(--a-gap);
-    color: black;
+    color: #000;
     display: flex;
     gap: var(--a-gap);
     flex-direction: row;

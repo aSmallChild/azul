@@ -2,12 +2,14 @@
 import { inject, onMounted, onUnmounted, ref } from 'vue';
 import { animate } from 'motion'
 import { getColour } from '../util/colours.js';
+import { key as metadataKey } from '../util/tile.js';
 
 defineExpose({
     setTile
 });
+
+const emit = defineEmits(['mounted']);
 const tileContainer = ref();
-const metadataKey = Symbol('tile');
 const game = inject('game');
 const draggedTiles = [];
 let currentAnimations = [];
@@ -62,6 +64,7 @@ game.on('line-drop', ({ lineIndex, event, getSlotPositions }) => {
 onMounted(() => {
     document.body.addEventListener('dragover', dragOver);
     document.body.draggable = false;
+    emit('mounted');
 });
 
 onUnmounted(() => {
@@ -152,7 +155,6 @@ async function drag(event) {
 }
 
 function createTileElement(tile) {
-    console.log('creating a tile with colour', tile.id, tile.colourId, getColour(tile.colourId).hex)
     const element = document.createElement('i');
     element.setAttribute('data-id', tile.id);
     element.setAttribute('draggable', 'true');
@@ -160,12 +162,15 @@ function createTileElement(tile) {
     element.style.setProperty('--a-tile-colour', getColour(tile.colourId).hex);
     element.addEventListener('dragstart', event => dragStart(event, tile));
     element.addEventListener('dragend', event => dragEnd(event, tile));
+    if (tile.colourId < 0) {
+        element.innerHTML = '1<small>st</small>'
+    }
     return element;
 }
 
 async function setTile(tile, options) {
     if (!tile.meta[metadataKey]) {
-        const element = createTileElement(tile)
+        const element = createTileElement(tile);
         tile.meta[metadataKey] = {
             element,
             position: { x: 0, y: 0 },
@@ -173,24 +178,27 @@ async function setTile(tile, options) {
         };
         tileContainer.value.appendChild(element);
     }
+    const element = tile.meta[metadataKey].element;
+    if (element.parentElement !== tileContainer.value) {
+        tileContainer.value.appendChild(element);
+    }
     const {
         isVisible = null,
         position = null,
         startPosition = null
     } = options;
-    const element = tile.meta[metadataKey].element;
     if (isVisible) {
         element.style['display'] = '';
     }
 
     const offset = 6;
     if (startPosition) {
-        await animate(tile.meta[metadataKey].element,
+        await animate(element,
             { x: `${position.x + offset}px`, y: `${position.y + offset}px` },
             { duration: 0, easing: 'linear' }
         ).finished;
     }
-    await animate(tile.meta[metadataKey].element,
+    await animate(element,
         { x: `${position.x + offset}px`, y: `${position.y + offset}px` },
         { duration: 0.15, easing: 'linear' }
     ).finished;

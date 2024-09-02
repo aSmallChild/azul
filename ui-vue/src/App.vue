@@ -1,13 +1,14 @@
 <script setup>
 import Board from './components/Board.vue';
 import Tiles from './components/Tiles.vue';
-import { provide, ref, onMounted } from 'vue';
+import { onMounted, provide, ref } from 'vue';
 import { addPlayer, dealTilesToFactoryDisplays, fillTileBag } from 'azul/functions/gameStandard.js';
 import { createGameState, createPlayer } from 'azul/models/game.js';
 import FactoryDisplay from './components/FactoryDisplay.vue';
 
 const highlight = ref({});
 const factoryDisplays = ref();
+const tableCenter = ref();
 const tiles = ref();
 const game = {
     state: createGameState(),
@@ -41,25 +42,37 @@ dealTilesToFactoryDisplays(game.state);
 provide('game', game);
 
 onMounted(() => {
-    factoryDisplays.value.forEach((display, displayIndex) => {
-        const slotPositions = display.getSlotPositions()
-        slotPositions.forEach((position, slotIndex) => {
-            const tile = game.state.factoryDisplays[displayIndex][slotIndex];
-            if (!tile) {
-                return;
-            }
+    placeAllTiles();
+});
 
-            tiles.value.setTile(tile, {
-                position
-            })
+window.addEventListener('resize', placeAllTiles);
+
+function placeAllTiles() {
+    if (!tiles.value) {
+        return;
+    }
+    tableCenter.value.getSlotPositions()
+        .forEach((position, slotIndex) => {
+            const tile = game.state.centerOfTable[slotIndex];
+            if (tile) {
+                tiles.value.setTile(tile, { position });
+            }
         });
 
+    factoryDisplays.value.forEach((display, displayIndex) => {
+        const slotPositions = display.getSlotPositions();
+        slotPositions.forEach((position, slotIndex) => {
+            const tile = game.state.factoryDisplays[displayIndex][slotIndex];
+            if (tile) {
+                tiles.value.setTile(tile, { position });
+            }
+        });
     });
-});
+}
 </script>
 
 <template>
-    <tiles ref="tiles"/>
+    <tiles ref="tiles" @mounted="placeAllTiles"/>
     <board v-for="player of game.state.players" :player="player"/>
     <div style="display: flex; gap: var(--a-gap); margin: var(--a-gap)">
         <factory-display
@@ -68,4 +81,11 @@ onMounted(() => {
             :size="game.state.rules.tilesPerFactoryDisplay"
         />
     </div>
+
+    <factory-display
+        style="margin: var(--a-gap)"
+        class="a-table-center"
+        ref="tableCenter"
+        :size="(game.state.rules.tilesPerFactoryDisplay - 1) * game.state.factoryDisplays.length"
+    />
 </template>
