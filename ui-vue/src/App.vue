@@ -5,31 +5,22 @@ import { onMounted, provide, ref } from 'vue';
 import { addPlayer, dealTilesToFactoryDisplays, fillTileBag } from 'azul/functions/gameStandard.js';
 import { createGameState, createPlayer } from 'azul/models/game.js';
 import FactoryDisplay from './components/FactoryDisplay.vue';
+import emitter from 'azul/models/emitter.js';
+import createGameApi from 'azul/models/api.js';
 
 const highlight = ref({});
+const playerBoards = ref();
 const factoryDisplays = ref();
 const tableCenter = ref();
+const centerSize = ref(1);
 const tiles = ref();
 const game = {
     state: createGameState(),
-    highlight,
-    listeners: new Map(),
-    emit(eventName, data) {
-        (this.listeners.get(eventName) ?? []).forEach(handler => {
-            try {
-                handler(data);
-            }
-            catch (e) {
-                console.error('Event handler error', eventName, e, handler, data);
-            }
-        })
-    },
-    on(eventName, handler) {
-        if (!this.listeners.has(eventName)) {
-            this.listeners.set(eventName, []);
-        }
-        this.listeners.get(eventName).push(handler);
-    }
+    highlight
+};
+emitter(game);
+game.state.emit = (eventName, eventData) => {
+    game.emit(eventName, eventData);
 };
 
 addPlayer(game.state, createPlayer({ name: 'PLAYER ONE' }));
@@ -38,6 +29,7 @@ addPlayer(game.state, createPlayer({ name: 'PLAYER THREE' }));
 addPlayer(game.state, createPlayer({ name: 'Bob' }));
 fillTileBag(game.state);
 dealTilesToFactoryDisplays(game.state);
+window.game = createGameApi(game);
 
 provide('game', game);
 
@@ -51,6 +43,7 @@ function placeAllTiles() {
     if (!tiles.value) {
         return;
     }
+    centerSize.value = game.state.centerOfTable.length;
     tableCenter.value.getSlotPositions()
         .forEach((position, slotIndex) => {
             const tile = game.state.centerOfTable[slotIndex];
@@ -68,12 +61,41 @@ function placeAllTiles() {
             }
         });
     });
+
+    for (const player of game.state.players) {
+        const board = playerBoards.value[player.index];
+        player.patternLines.forEach((line, index) =>
+            setPlayerLineTiles(board, line, index, false)
+        );
+        player.wall.forEach((line, index) =>
+            setPlayerLineTiles(board, line, index, true)
+        );
+        setPlayerLineTiles(board, player.floorLine, -1, false);
+    }
+}
+
+function setPlayerLineTiles(board, line, lineIndex, isWall) {
+    if (!line.some(tile => tile)) {
+        return;
+    }
+    const slotPositions = board.getSlotPositions(lineIndex, isWall);
+    line.forEach((tile, tileIndex) => {
+        if (!tile) {
+            return;
+        }
+        tiles.value.setTile(tile, { position: slotPositions[tileIndex] });
+    });
 }
 </script>
 
 <template>
     <tiles ref="tiles" @mounted="placeAllTiles"/>
-    <board v-for="player of game.state.players" :player="player"/>
+    <board
+        v-for="player of game.state.players"
+        :player="player"
+        ref="playerBoards"
+        :key="player.index"
+    />
     <div style="display: flex; gap: var(--a-gap); margin: var(--a-gap)">
         <factory-display
             v-for="_ in game.state.factoryDisplays.length"
@@ -86,6 +108,6 @@ function placeAllTiles() {
         style="margin: var(--a-gap)"
         class="a-table-center"
         ref="tableCenter"
-        :size="(game.state.rules.tilesPerFactoryDisplay - 1) * game.state.factoryDisplays.length"
+        :size="centerSize"
     />
 </template>

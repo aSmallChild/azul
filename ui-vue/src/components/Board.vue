@@ -51,6 +51,12 @@ const vTileLine = {
     }
 }
 
+defineExpose({
+    getSlotPositions(lineIndex, isWall = false) {
+        return getSlotPositionsFromLine(lineIndex, isWall);
+    },
+});
+
 function getSlotPositionsFromLine(lineIndex, isWall = false) {
     const line = getLineRef(lineIndex, isWall);
     return getSlotPositions(line.children);
@@ -90,10 +96,10 @@ function emitDragEvent(eventName, lineIndex, event) {
             </div>
         </div>
         <div class="a-floor-line" style="flex-direction: row" ref="floorLineRef" v-tile-line="-1">
-            <div v-for="slot in floorLine" style="text-align: center">
+            <div v-for="points in floorLine" style="text-align: center">
                 <div class="a-tile-slot">
                 </div>
-                {{ slot }}
+                {{ points }}
             </div>
         </div>
     </div>

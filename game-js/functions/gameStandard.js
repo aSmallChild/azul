@@ -4,10 +4,6 @@ function setNextPlayer(gameState) {
     gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
 }
 
-function setStartingPlayer(gameState, index) {
-    gameState.currentPlayerIndex = index;
-}
-
 export function addPlayer(gameState, player) {
     const { rules: { numberOfColours }, players, factoryDisplays } = gameState;
     player.index = players.length;
@@ -54,6 +50,7 @@ export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colour
         addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
     }
 
+    emitNextTurn(gameState, false);
     return { success: true };
 }
 
@@ -84,6 +81,7 @@ export function drawFromCenter(gameState, player, colourId, patternLineIndex = -
         addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
     }
 
+    emitNextTurn(gameState, false);
     return { success: true };
 }
 
@@ -134,12 +132,6 @@ function canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex
     return { success: true };
 }
 
-function canMoveTileToWall(gameState, player, patternLineIndex, wallColumnIndex) {
-    const [patternLineTile] = player.patternLines[patternLineIndex];
-    const targetColourId = getColourForWallPosition(gameState, wallColumnIndex, patternLineIndex);
-    return patternLineTile?.colourId === targetColourId;
-}
-
 export function getColourForWallPosition(gameState, x, y) {
     return x >= y ? x - y : gameState.rules.numberOfColours + x - y;
 }
@@ -163,16 +155,6 @@ export function addTilesToFloorLine(gameState, player, tiles) {
     const numberOfTilesToAdd = gameState.rules.floorLinePenalties.length - player.floorLine.length;
     player.floorLine = player.floorLine.concat(tiles.slice(0, numberOfTilesToAdd));
     gameState.discardedTiles = gameState.discardedTiles.concat(tiles.slice(numberOfTilesToAdd));
-}
-
-export function shiftStartTileToCenter(gameState) {
-    for (const player of gameState.players) {
-        const index = player.floorLine.findIndex(tile => tile.colourId === -1);
-        if (index < 0) {
-            gameState.centerOfTable.push(...player.floorLine.splice(index, 1));
-            return;
-        }
-    }
 }
 
 export function dealTilesToFactoryDisplays(gameState) {
@@ -216,6 +198,7 @@ export function scoreRound(gameState) {
 function prepareNextRound(gameState) {
     gameState.currentPlayerIndex = gameState.nextRoundStartingPlayerIndex;
     dealTilesToFactoryDisplays(gameState);
+    emitNextTurn(gameState, true);
 }
 
 function determineWinners(gameState, finalRoundScores) {
@@ -359,4 +342,16 @@ function refillTileBag(gameState) {
 
 function shuffleTiles(tiles) {
     return tiles.sort(() => Math.random() - 0.5);
+}
+
+function emitNextTurn(gameState, isNewRound = false) {
+    if (!isNewRound) {
+        setNextPlayer(gameState);
+    }
+    setTimeout(() => {
+        gameState.emit('player-turn', {
+            currentPlayerIndex: gameState.currentPlayerIndex,
+            isNewRound
+        });
+    }, 1);
 }

@@ -34,7 +34,7 @@ export function createGameState(params = {}) {
     return {
         rules,
         players: [],
-        currentPlayerIndex: null,
+        currentPlayerIndex: 0,
         nextRoundStartingPlayerIndex: null,
         factoryDisplays: [[]],
         centerOfTable: [createTile(1, -1)],
@@ -42,9 +42,12 @@ export function createGameState(params = {}) {
         discardedTiles: [],
         roundIndex: 0,
         emit,
+        dataAvailableToPlayer() {
+            const { emit, dataAvailableToPlayer, tileBag, ...state } = this;
+            return structuredClone(state);
+        },
         toJSON() {
-            const { emit, tileBag, ...state } = this;
-            return state;
+            return this.dataAvailableToPlayer();
         }
     };
 }
