@@ -28,7 +28,7 @@ export function createGameRules() {
 export function createGameState(params = {}) {
     const {
         rules = createGameRules(),
-        emit = () => {}
+        emit = null
     } = params;
 
     return {
@@ -42,12 +42,15 @@ export function createGameState(params = {}) {
         discardedTiles: [],
         roundIndex: 0,
         emit,
-        dataAvailableToPlayer() {
-            const { emit, dataAvailableToPlayer, tileBag, ...state } = this;
-            return structuredClone(state);
-        },
-        toJSON() {
-            return this.dataAvailableToPlayer();
-        }
     };
+}
+
+export function stateAsSeenByPlayer(gameState) {
+    const { tileBag, ...state } = gameState;
+    for (const key of Object.keys(state)) {
+        if (state[key]?.constructor === Function) {
+            delete state[key];
+        }
+    }
+    return structuredClone(state);
 }

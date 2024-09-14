@@ -23,8 +23,8 @@ export function addPlayer(gameState, player) {
             () => null
         )
     );
-    gameState.emit('player-added', { player });
-    gameState.emit('factory-display-added', { factoryDisplays, displaysAdded: 2 });
+    gameState?.emit('player-added', { player });
+    gameState?.emit('factory-display-added', { factoryDisplays, displaysAdded: 2 });
     return player;
 }
 
@@ -50,7 +50,7 @@ export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colour
         addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
     }
 
-    emitNextTurn(gameState, false);
+    prepareNextTurn(gameState);
     return { success: true };
 }
 
@@ -81,7 +81,7 @@ export function drawFromCenter(gameState, player, colourId, patternLineIndex = -
         addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
     }
 
-    emitNextTurn(gameState, false);
+    prepareNextTurn(gameState);
     return { success: true };
 }
 
@@ -145,8 +145,8 @@ export function addTilesToPatternLine(gameState, player, patternLine, tiles) {
     const startIndex = patternLine.indexOf(null);
     const remainingSpaces = patternLine.length - startIndex;
     const numberOfTilesToAdd = Math.min(tiles.length, remainingSpaces);
-    for (let i = startIndex; i < numberOfTilesToAdd; i++) {
-        patternLine[i] = tiles.shift();
+    for (let i = 0; i < numberOfTilesToAdd; i++) {
+        patternLine[i + startIndex] = tiles.shift();
     }
     addTilesToFloorLine(gameState, player, tiles);
 }
@@ -176,7 +176,7 @@ export function scoreRound(gameState) {
     const roundScores = gameState.players.map((player) => {
         const playerScores = countPlayerScores(gameState, player);
         if (playerScores.length) {
-            gameState.emit('player-scores', { player, playerScores });
+            gameState?.emit('player-scores', { player, playerScores });
         }
         if (!isGameOver) {
             isGameOver = playerScores.some(scores => scores.rowCompleted);
@@ -186,19 +186,18 @@ export function scoreRound(gameState) {
 
     if (isGameOver) {
         const winners = determineWinners(gameState, roundScores);
-        gameState.emit('game-over', { winners });
+        gameState?.emit('game-over', { winners });
     }
     else {
         prepareNextRound(gameState);
     }
 
-    return roundScores;
+    return { isGameOver, roundScores };
 }
 
 function prepareNextRound(gameState) {
     gameState.currentPlayerIndex = gameState.nextRoundStartingPlayerIndex;
     dealTilesToFactoryDisplays(gameState);
-    emitNextTurn(gameState, true);
 }
 
 function determineWinners(gameState, finalRoundScores) {
@@ -248,7 +247,7 @@ export function countPlayerScores(gameState, player) {
         line[0] = null;
         const tilesToDiscard = line.filter(e => e !== null);
         gameState.discardedTiles = gameState.discardedTiles.concat(tilesToDiscard);
-        gameState.emit('tiles-discarded', { player, tiles: tilesToDiscard, patternLineIndex: y, discardedTiles: structuredClone(gameState.discardedTiles) });
+        gameState?.emit('tiles-discarded', { player, tiles: tilesToDiscard, patternLineIndex: y, discardedTiles: structuredClone(gameState.discardedTiles) });
         for (let i = 1; i < line.length; i++) {
             line[i] = null;
         }
@@ -269,10 +268,10 @@ export function countPlayerScores(gameState, player) {
         player.floorLine = [];
         if (startTile) {
             gameState.centerOfTable = [startTile];
-            gameState.emit('start-tile-returned', { player, centerOfTable: gameState.centerOfTable, patternLineIndex: -1, discardedTiles: [-1] });
+            gameState?.emit('start-tile-returned', { player, centerOfTable: gameState.centerOfTable, patternLineIndex: -1, discardedTiles: [-1] });
         }
         if (tiles.length) {
-            gameState.emit('tiles-discarded', { player, tiles, patternLineIndex: -1, discardedTiles: gameState.discardedTiles });
+            gameState?.emit('tiles-discarded', { player, tiles, patternLineIndex: -1, discardedTiles: gameState.discardedTiles });
         }
         player.floorLine = [];
     }
@@ -344,14 +343,32 @@ function shuffleTiles(tiles) {
     return tiles.sort(() => Math.random() - 0.5);
 }
 
-function emitNextTurn(gameState, isNewRound = false) {
-    if (!isNewRound) {
+function prepareNextTurn(gameState) {
+    const isNewRound = !gameState.factoryDisplays.some(lineHasTiles)
+        && !lineHasTiles(gameState.centerOfTable);
+    const result = { success: true, isNewRound, isGameOver: false };
+    if (isNewRound) {
+        const { isGameOver } = scoreRound(gameState);
+        result.isGameOver = isGameOver;
+        if (isGameOver) {
+            return result;
+        }
+        gameState.currentPlayerIndex = gameState.nextRoundStartingPlayerIndex;
+    }
+    else {
         setNextPlayer(gameState);
     }
+
     setTimeout(() => {
-        gameState.emit('player-turn', {
+        gameState?.emit('player-turn', {
             currentPlayerIndex: gameState.currentPlayerIndex,
             isNewRound
         });
     }, 1);
+
+    return result;
+}
+
+function lineHasTiles(line) {
+    return line.some(tile => tile);
 }

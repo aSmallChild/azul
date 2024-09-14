@@ -16,3 +16,13 @@ export function getHexColour(colourId) {
 export function getColour(colourId) {
     return hexColours?.[colourId] ?? startColour;
 }
+
+export function getColourByName(name, numberOfColours) {
+    name = name.toLocaleLowerCase().trim();
+    const colours = hexColours.filter(colour => colour.id < numberOfColours);
+    const exactMatch = colours.find(colour => colour.name === name);
+    if (exactMatch) {
+        return exactMatch.id;
+    }
+    return colours.find(colour => colour.name.startsWith(name))?.id;
+}

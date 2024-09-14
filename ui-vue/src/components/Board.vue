@@ -8,6 +8,10 @@ const props = defineProps({
     player: {
         type: Object,
         required: true
+    },
+    isCurrent: {
+        type: Boolean,
+        default: false
     }
 });
 const game = inject('game');
@@ -76,7 +80,7 @@ function emitDragEvent(eventName, lineIndex, event) {
 </script>
 
 <template>
-    <div class="a-board" style="display: inline-flex; flex-direction: column">
+    <div class="a-board" style="display: inline-flex; flex-direction: column" :class="{'a-current-player': isCurrent}">
         <div style="display: flex">
             <div class="a-tile-lines a-pattern-lines">
                 <div class="a-tile-line" v-for="(line, lineIndex) of patternLines" ref="patternLineRefs" v-tile-line="lineIndex">

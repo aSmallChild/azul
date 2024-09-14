@@ -159,7 +159,7 @@ describe('Standard game tests', () => {
             player1.patternLines[3] = [createTile(1, 1), createTile(1, 1), createTile(1, 1), createTile(1, 1)];
             player1.patternLines[4] = [createTile(1, 1), createTile(1, 1), createTile(1, 1), createTile(1, 1), createTile(1, 1)];
             player1.floorLine = [createTile(1, 1), createTile(1, 1)];
-            const roundScores = scoreRound(state);
+            const { roundScores } = scoreRound(state);
             expect(player1.score).to.equal(5 + 10 - 2);
             const [playerScores] = roundScores;
             playerScores.forEach(scores => {

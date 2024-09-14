@@ -1,10 +1,14 @@
 import emitter from './emitter.js';
 import { drawFromCenter, drawFromFactoryDisplay } from '../functions/gameStandard.js';
+import { stateAsSeenByPlayer } from './game.js';
 
 export default function createGameApi(game) {
     const api = emitter({
         drawTiles(factoryDisplayIndex, colourId, targetPatternLineIndex) {
-            validateParams(game, factoryDisplayIndex, colourId, targetPatternLineIndex);
+            const validationError = validateParams(game, factoryDisplayIndex, colourId, targetPatternLineIndex);
+            if (validationError) {
+                return validationError;
+            }
             const player = game.state.players[game.state.currentPlayerIndex];
             if (factoryDisplayIndex < 0) {
                 return drawFromCenter(game.state, player, colourId, targetPatternLineIndex);
@@ -12,8 +16,8 @@ export default function createGameApi(game) {
             const factoryDisplay = game.state.factoryDisplays[factoryDisplayIndex];
             return drawFromFactoryDisplay(game.state, factoryDisplay, player, colourId, targetPatternLineIndex)
         },
-        getGameState() {
-            return game.state.dataAvailableToPlayer();
+        getState() {
+            return stateAsSeenByPlayer(game.state);
         }
     });
     game.on('player-turn', (eventData) => api.emit('player-turn', eventData));
@@ -23,14 +27,25 @@ export default function createGameApi(game) {
 
 function validateParams(game, factoryDisplayIndex, colourId, targetPatternLineIndex) {
     if (isNaN(factoryDisplayIndex) || factoryDisplayIndex >= game.state.factoryDisplays.length) {
-        throw new Error(`factoryDisplayIndex must be a number between -1 and ${game.state.factoryDisplays.length - 1}`);
+        return {
+            success: false,
+            message: `factoryDisplayIndex must be a number between -1 and ${game.state.factoryDisplays.length - 1}`
+        };
     }
 
-    if (isNaN(colourId) || colourId < 0 || colourId >= game.state.numberOfColours) {
-        throw new Error(`colourId must be a number between 0 and ${game.state.numberOfColours - 1}`);
+    if (isNaN(colourId) || colourId < 0 || colourId >= game.state.rules.numberOfColours) {
+        return {
+            success: false,
+            message: `colourId must be a number between 0 and ${game.state.rules.numberOfColours - 1}`
+        };
     }
 
     if (isNaN(targetPatternLineIndex) || targetPatternLineIndex >= game.state.factoryDisplays.length) {
-        throw new Error(`targetPatternLineIndex must be a number between -1 and ${game.state.factoryDisplays.length - 1}`);
+        return {
+            success: false,
+            message: `targetPatternLineIndex must be a number between -1 and ${game.state.factoryDisplays.length - 1}`
+        };
     }
+
+    return null;
 }

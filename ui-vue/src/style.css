@@ -139,3 +139,7 @@ body {
         translate: var(--a-displace) var(--a-displace);
     }
 }
+
+.a-current-player {
+    font-weight: bold;
+}
