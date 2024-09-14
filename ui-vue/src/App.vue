@@ -20,6 +20,9 @@ const game = {
 };
 emitter(game);
 game.state.emit = (eventName, eventData) => {
+    if (eventName === 'player-turn' || eventName === 'game-over') {
+        placeAllTiles();
+    }
     game.emit(eventName, eventData);
 };
 
