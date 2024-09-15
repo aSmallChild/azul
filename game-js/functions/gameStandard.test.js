@@ -1,13 +1,17 @@
 import { addPlayer, addTilesToFloorLine, dealTilesToFactoryDisplays, drawFromCenter, drawFromFactoryDisplay, fillTileBag, scoreRound } from './gameStandard.js';
 import { createGameState, createPlayer } from '../models/game.js';
-import { createTile } from '../models/tile.js';
+import Tile, { createTile } from '../models/tile.js';
 import { expect } from 'chai';
+import loadGame from './loadGame.js';
 
 describe('Standard game tests', () => {
     describe('addPlayer', () => {
-        const state = createGameState();
-        const player = createPlayer();
-        addPlayer(state, player);
+        let state, player;
+        before(() => {
+            state = createGameState();
+            player = createPlayer();
+            addPlayer(state, player);
+        })
 
         it('should add player to game state', () => {
             expect(state.players.length).to.equal(1);
@@ -172,6 +176,74 @@ describe('Standard game tests', () => {
             });
             expect(playerScores[3].colourScore).to.equal(0);
             expect(playerScores[4].colourScore).to.equal(10);
+        });
+    });
+
+    describe('final move in round', () => {
+        let state;
+        before(() => {
+            state = loadGame({
+                rules: { numberOfColours: 5, tilesPerColour: 20, tilesPerFactoryDisplay: 4, floorLinePenalties: [-1, -1, -2, -2, -2, -3, -3], rowPoints: 2, columnPoints: 7, colourPoints: 10, firstPickFromCentre: -1 },
+                players: [
+                    {
+                        index: 0, name: 'PLAYER ONE', score: 0,
+                        patternLines: [
+                            [{ id: 66, colourId: 3 }],
+                            [{ id: 98, colourId: 4 }, { id: 85, colourId: 4 }],
+                            [{ id: 72, colourId: 3 }, { id: 64, colourId: 3 }, { id: 65, colourId: 3 }],
+                            [null, null, null, null],
+                            [{ id: 4, colourId: 0 }, { id: 20, colourId: 0 }, { id: 7, colourId: 0 }, null, null]],
+                        wall: [[null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null]], floorLine: [{ id: 78, colourId: 3 }]
+                    },
+                    {
+                        index: 1, name: 'PLAYER 2', score: 0,
+                        patternLines: [
+                            [{ id: 55, colourId: 2 }],
+                            [{ id: 67, colourId: 3 }, { id: 68, colourId: 3 }],
+                            [null, null, null],
+                            [null, null, null, null],
+                            [{ id: 82, colourId: 4 }, { id: 99, colourId: 4 }, { id: 86, colourId: 4 }, { id: 97, colourId: 4 }, { id: 96, colourId: 4 }]
+                        ],
+                        wall: [[null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null]], floorLine: [{ id: 1, colourId: -1 }]
+                    }],
+                currentPlayerIndex: 0,
+                nextRoundStartingPlayerIndex: 1,
+                factoryDisplays: [[], [], [], [], []],
+                centerOfTable: [{ id: 29, colourId: 1 }, { id: 39, colourId: 1 }],
+                tileBag: [{ id: 89, colourId: 4 }, { id: 100, colourId: 4 }, { id: 1, colourId: 0 }, { id: 54, colourId: 2 }, { id: 83, colourId: 4 }, { id: 76, colourId: 3 }, { id: 93, colourId: 4 }, { id: 69, colourId: 3 }, { id: 2, colourId: 0 }, { id: 30, colourId: 1 }, { id: 42, colourId: 2 }, { id: 50, colourId: 2 }, { id: 75, colourId: 3 }, { id: 45, colourId: 2 }, { id: 74, colourId: 3 }, { id: 84, colourId: 4 }, { id: 94, colourId: 4 }, { id: 47, colourId: 2 }, { id: 21, colourId: 1 }, { id: 91, colourId: 4 }, { id: 71, colourId: 3 },
+                    { id: 81, colourId: 4 }, { id: 90, colourId: 4 }, { id: 8, colourId: 0 }, { id: 19, colourId: 0 }, { id: 58, colourId: 2 }, { id: 5, colourId: 0 }, { id: 37, colourId: 1 }, { id: 70, colourId: 3 }, { id: 3, colourId: 0 }, { id: 73, colourId: 3 }, { id: 80, colourId: 3 }, { id: 79, colourId: 3 }, { id: 88, colourId: 4 }, { id: 28, colourId: 1 }, { id: 77, colourId: 3 }, { id: 56, colourId: 2 }, { id: 95, colourId: 4 }, { id: 41, colourId: 2 }, { id: 87, colourId: 4 }, { id: 92, colourId: 4 }, { id: 51, colourId: 2 },
+                    { id: 17, colourId: 0 }, { id: 52, colourId: 2 }, { id: 46, colourId: 2 }, { id: 48, colourId: 2 }, { id: 34, colourId: 1 }, { id: 43, colourId: 2 }, { id: 32, colourId: 1 }, { id: 9, colourId: 0 }, { id: 60, colourId: 2 }, { id: 23, colourId: 1 }, { id: 10, colourId: 0 }, { id: 40, colourId: 1 }, { id: 27, colourId: 1 }, { id: 57, colourId: 2 }, { id: 33, colourId: 1 }, { id: 62, colourId: 3 }, { id: 18, colourId: 0 }, { id: 49, colourId: 2 },
+                    { id: 44, colourId: 2 }, { id: 59, colourId: 2 }, { id: 26, colourId: 1 }, { id: 6, colourId: 0 }, { id: 61, colourId: 3 }, { id: 11, colourId: 0 }, { id: 36, colourId: 1 }, { id: 25, colourId: 1 }, { id: 63, colourId: 3 }, { id: 35, colourId: 1 }, { id: 12, colourId: 0 }, { id: 53, colourId: 2 }, { id: 38, colourId: 1 }, { id: 31, colourId: 1 }, { id: 14, colourId: 0 }, { id: 22, colourId: 1 }, { id: 24, colourId: 1 }, { id: 15, colourId: 0 }, { id: 13, colourId: 0 }, { id: 16, colourId: 0 }],
+                discardedTiles: [],
+                roundIndex: 0
+            });
+            drawFromCenter(state, state.players[0], 1, 3);
+        });
+
+        it('should move tiles to the wall', () => {
+            const [player1, player2] = state.players;
+            expect(player1.wall[0][3].colourId).to.eq(3);
+            expect(player1.wall[1][0].colourId).to.eq(4);
+            expect(player1.wall[2][0].colourId).to.eq(3);
+            expect(player1.wall[3].every(e => !e)).to.be.true;
+            expect(player1.wall[4].every(e => !e)).to.be.true;
+
+            expect(player2.wall[0][2].colourId).to.eq(2);
+            expect(player2.wall[1][4].colourId).to.eq(3);
+            expect(player2.wall[2].every(e => !e)).to.be.true;
+            expect(player2.wall[3].every(e => !e)).to.be.true;
+            expect(player2.wall[4][3].colourId).to.eq(4);
+        });
+
+        it('should add up some scores', () => {
+            expect(state.players[0].score).to.eq(3);
+            expect(state.players[1].score).to.eq(2);
+        });
+
+        it('should return the start tile to the center', () => {
+            const tile = state.centerOfTable[0];
+            expect(tile).to.be.instanceOf(Tile);
+            expect(tile.colourId).to.eq(-1);
         });
     });
 });

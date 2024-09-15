@@ -28,7 +28,7 @@ export function createGameRules() {
 export function createGameState(params = {}) {
     const {
         rules = createGameRules(),
-        emit = null
+        emit = () => {}
     } = params;
 
     return {

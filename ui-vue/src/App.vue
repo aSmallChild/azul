@@ -3,6 +3,7 @@ import Board from './components/Board.vue';
 import Tiles from './components/Tiles.vue';
 import { nextTick, onMounted, provide, ref } from 'vue';
 import { addPlayer, dealTilesToFactoryDisplays, fillTileBag } from 'azul/functions/gameStandard.js';
+import loadGame from 'azul/functions/loadGame.js';
 import { createGameState, createPlayer } from 'azul/models/game.js';
 import FactoryDisplay from './components/FactoryDisplay.vue';
 import emitter from 'azul/models/emitter.js';
@@ -39,11 +40,12 @@ window.game = createGameApi(game);
 window.colour = (name) => getColourByName(name, game.state.rules.numberOfColours);
 window.row = (id) => id > 0 ? id - 1 : id;
 window.display = (id) => id > 0 ? id - 1 : id;
-window.cheat = (gameState) => {
-    setGameState(gameState)
+window.load = (gameState) => {
+    setGameState(loadGame(gameState));
+    tiles.value.clearTiles();
     placeAllTiles();
-}
-window.getGameState = () => window.game.getState();
+};
+window.save = () => JSON.stringify(game.state);
 window.drawTiles = (...args) => window.game.drawTiles(...args);
 
 provide('game', game);
@@ -118,7 +120,6 @@ function setGameState(state) {
         game.emit(eventName, eventData);
     };
     currentPlayerIndex.value = game.state.currentPlayerIndex;
-    // todo clear all tiles previously rendered
 }
 </script>
 

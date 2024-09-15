@@ -5,7 +5,8 @@ import { getColour } from '../util/colours.js';
 import { key as metadataKey } from '../util/tile.js';
 
 defineExpose({
-    setTile
+    setTile,
+    clearTiles
 });
 
 const emit = defineEmits(['mounted']);
@@ -206,6 +207,10 @@ async function setTile(tile, options) {
     if (isVisible === false) {
         element.style['display'] = 'none';
     }
+}
+
+function clearTiles() {
+    tileContainer.value.replaceChildren();
 }
 </script>
 

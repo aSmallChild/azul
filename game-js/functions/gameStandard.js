@@ -106,7 +106,7 @@ function canDrawFromLocation(availableTiles, colourIdToDraw, locationName) {
 
 function canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex) {
     const x = getXPositionForColourOnLine(gameState, patternLineIndex, colourId);
-    if (player.wall[x][patternLineIndex] !== null) {
+    if (player.wall[patternLineIndex][x] !== null) {
         return {
             success: false,
             message: 'You already have a tile of that colour in that row.'
@@ -133,12 +133,11 @@ function canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex
 }
 
 export function getColourForWallPosition(gameState, x, y) {
-    return x >= y ? x - y : gameState.rules.numberOfColours + x - y;
+    return y >= x ? y - x : gameState.rules.numberOfColours + y - x;
 }
 
 function getXPositionForColourOnLine(gameState, y, colourId) {
-    const x = colourId - y;
-    return x < 0 ? x + gameState.rules.numberOfColours : x;
+    return (y + colourId) % gameState.rules.numberOfColours;
 }
 
 export function addTilesToPatternLine(gameState, player, patternLine, tiles) {
@@ -158,6 +157,7 @@ export function addTilesToFloorLine(gameState, player, tiles) {
 }
 
 export function dealTilesToFactoryDisplays(gameState) {
+    shuffleTiles(gameState.tileBag);
     const tilesPerFactoryDisplay = gameState.rules.numberOfColours - 1;
     for (let i = 0; i < gameState.factoryDisplays.length; i++) {
         gameState.factoryDisplays[i] = gameState.tileBag.splice(0, tilesPerFactoryDisplay);
@@ -241,7 +241,7 @@ export function countPlayerScores(gameState, player) {
         }
 
         const x = getXPositionForColourOnLine(gameState, y, lastTile.colourId);
-        player.wall[x][y] = lastTile;
+        player.wall[y][x] = lastTile;
         const scores = scoreNewTile(gameState, player, lastTile, x, y);
         player.score += scores.rowScore + scores.columnScore + scores.colourScore;
         line[0] = null;
@@ -300,14 +300,14 @@ function scoreNewTile(gameState, player, tile, x, y) {
     let rowScore = 0, columnScore = 0, colourScore = 0;
     let rowScored = false, columnScored = false;
     for (let i = 0; i < numberOfColours; i++) {
-        const [rowTileScore, finishedScoringRow] = countTile(rowScored, player.wall[x][i], i >= y);
+        const [rowTileScore, finishedScoringRow] = countTile(rowScored, player.wall[i][x], i >= y);
         rowScore = rowTileScore === -1 ? 0 : rowScore + rowTileScore;
         rowScored = finishedScoringRow;
-        const [columnTileScore, finishedScoringColumn] = countTile(columnScored, player.wall[i][y], i >= x);
+        const [columnTileScore, finishedScoringColumn] = countTile(columnScored, player.wall[y][i], i >= x);
         columnScore = columnTileScore === -1 ? 0 : columnScore + columnTileScore;
         columnScored = finishedScoringColumn;
         const colourX = getXPositionForColourOnLine(gameState, i, tile.colourId);
-        if (player.wall[colourX][i]) {
+        if (player.wall[i][colourX]) {
             colourScore++;
         }
     }
