@@ -241,14 +241,12 @@ export function countPlayerScores(gameState, player) {
         }
 
         const x = getXPositionForColourOnLine(gameState, y, lastTile.colourId);
-        player.wall[y][x] = lastTile;
+        player.wall[y][x] = line[0];
         const scores = scoreNewTile(gameState, player, lastTile, x, y);
         player.score += scores.rowScore + scores.columnScore + scores.colourScore;
-        line[0] = null;
-        const tilesToDiscard = line.filter(e => e !== null);
+        const tilesToDiscard = line.slice(1);
         gameState.discardedTiles = gameState.discardedTiles.concat(tilesToDiscard);
-        gameState?.emit('tiles-discarded', { player, tiles: tilesToDiscard, patternLineIndex: y, discardedTiles: structuredClone(gameState.discardedTiles) });
-        for (let i = 1; i < line.length; i++) {
+        for (let i = 0; i < line.length; i++) {
             line[i] = null;
         }
         scores.patternLineIndex = y;
@@ -262,17 +260,14 @@ export function countPlayerScores(gameState, player) {
     if (floorLinePoints) {
         player.score += floorLinePoints;
         playerScores.push({ floorLinePoints, patternLineIndex: -1 });
-        const tiles = player.floorLine.filter(colour => colour !== -1);
+        const tiles = player.floorLine.filter(tile => {
+            if (tile.colourId === -1) {
+                gameState.centerOfTable = [tile];
+                return false;
+            }
+            return true;
+        });
         gameState.discardedTiles = gameState.discardedTiles.concat(tiles);
-        const startTile = player.floorLine.find(tile => tile.colourId === -1);
-        player.floorLine = [];
-        if (startTile) {
-            gameState.centerOfTable = [startTile];
-            gameState?.emit('start-tile-returned', { player, centerOfTable: gameState.centerOfTable, patternLineIndex: -1, discardedTiles: [-1] });
-        }
-        if (tiles.length) {
-            gameState?.emit('tiles-discarded', { player, tiles, patternLineIndex: -1, discardedTiles: gameState.discardedTiles });
-        }
         player.floorLine = [];
     }
     return playerScores;

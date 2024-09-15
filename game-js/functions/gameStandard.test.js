@@ -244,6 +244,7 @@ describe('Standard game tests', () => {
             const tile = state.centerOfTable[0];
             expect(tile).to.be.instanceOf(Tile);
             expect(tile.colourId).to.eq(-1);
+            expect(state.discardedTiles.find(tile => tile.id === 1)).to.be.undefined;
         });
     });
 });
