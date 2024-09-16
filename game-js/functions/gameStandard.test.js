@@ -40,8 +40,8 @@ describe('Standard game tests', () => {
         state.factoryDisplays = [
             [createTile(11, 0), createTile(21, 0), createTile(31, 0), createTile(41, 1)],
             [createTile(12, 1), createTile(22, 2), createTile(32, 0), createTile(42, 1)],
-            [createTile(13, 2), createTile(23, 1), createTile(33, 0), createTile(43, 3)],
-            [createTile(14, 3), createTile(24, 3), createTile(34, 0), createTile(44, 2)],
+            [createTile(13, 3), createTile(23, 3), createTile(33, 0), createTile(43, 2)],
+            [createTile(14, 2), createTile(24, 1), createTile(34, 0), createTile(44, 3)],
             [createTile(15, 3), createTile(25, 3), createTile(35, 0), createTile(45, 2)],
         ];
 
@@ -108,6 +108,25 @@ describe('Standard game tests', () => {
             expect(state.centerOfTable[0].colourId).to.equal(1);
             expect(state.centerOfTable[1].colourId).to.equal(0);
             expect(state.nextRoundStartingPlayerIndex).to.equal(0);
+        });
+
+        it('turn 3 - player denied playing out of turn', () => {
+            const result1 = drawFromCenter(state, player1, 2, 1);
+            expect(result1.success).to.be.false;
+            const result2 = drawFromFactoryDisplay(state, state.factoryDisplays[2], player1, 1, 0);
+            expect(result2.success).to.be.false;
+        });
+
+        it('turn 4 - a good move', () => {
+            const factoryDisplay = state.factoryDisplays[2];
+            const result = drawFromFactoryDisplay(state, factoryDisplay, player2, 3, 1);
+            expect(result.success).to.be.true;
+        });
+
+        it('turn 5 - denied starting a second row when another row of that colour is incomplete', () => {
+            const factoryDisplay = state.factoryDisplays[3];
+            const result = drawFromFactoryDisplay(state, factoryDisplay, player1, 2, 3);
+            expect(result.success).to.be.false;
         });
     });
 

@@ -29,6 +29,11 @@ export function addPlayer(gameState, player) {
 }
 
 export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colourId, patternLineIndex = -1) {
+    const isTurnResult = isPlayerTurn(gameState, player);
+    if (!isTurnResult.success) {
+        return isTurnResult;
+    }
+
     const { tiles = null, ...drawResult } = canDrawFromLocation(factoryDisplay, colourId, 'that factory display');
     if (!drawResult.success) {
         return drawResult;
@@ -55,6 +60,11 @@ export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colour
 }
 
 export function drawFromCenter(gameState, player, colourId, patternLineIndex = -1) {
+    const isTurnResult = isPlayerTurn(gameState, player);
+    if (!isTurnResult.success) {
+        return isTurnResult;
+    }
+
     const center = gameState.centerOfTable;
     const { tiles = null, ...drawResult } = canDrawFromLocation(center, colourId, 'in the center of the table');
     if (!drawResult.success) {
@@ -82,6 +92,17 @@ export function drawFromCenter(gameState, player, colourId, patternLineIndex = -
     }
 
     prepareNextTurn(gameState);
+    return { success: true };
+}
+
+function isPlayerTurn(gameState, player) {
+    if (player.index !== gameState.currentPlayerIndex) {
+        return {
+            success: false,
+            message: `It's not your turn.`
+        };
+    }
+
     return { success: true };
 }
 
@@ -125,7 +146,25 @@ function canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex
     if (firstTile && firstTile.colourId !== colourId) {
         return {
             success: false,
-            message: 'You already have a tile of a different colour in that patternLine.'
+            message: 'There is already a tile of a different colour in that pattern line.'
+        };
+    }
+
+    const otherSameColoursLinesAreComplete = player.patternLines.every((patternLine, index) => {
+        if (index === patternLineIndex) {
+            return true;
+        }
+        const [firstTile] = patternLine;
+        if (!firstTile) {
+            return true;
+        }
+        return patternLine.at(-1) || firstTile.colourId !== colourId;
+    });
+
+    if (!otherSameColoursLinesAreComplete) {
+        return {
+            success: false,
+            message: 'There is another pattern line with that colour that is incomplete.'
         };
     }
 
