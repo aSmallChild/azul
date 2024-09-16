@@ -189,7 +189,7 @@ async function setTile(tile, options) {
         startPosition = null
     } = options;
     if (isVisible) {
-        element.style['display'] = '';
+        element.style.display = '';
     }
 
     const offset = 6;
@@ -205,7 +205,7 @@ async function setTile(tile, options) {
     ).finished;
 
     if (isVisible === false) {
-        element.style['display'] = 'none';
+        element.style.display = 'none';
     }
 }
 

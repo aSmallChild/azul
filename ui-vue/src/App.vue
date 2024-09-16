@@ -40,10 +40,10 @@ window.game = createGameApi(game);
 window.colour = (name) => getColourByName(name, game.state.rules.numberOfColours);
 window.row = (id) => id > 0 ? id - 1 : id;
 window.display = (id) => id > 0 ? id - 1 : id;
-window.load = (gameState) => {
+window.load = async (gameState) => {
     setGameState(loadGame(gameState));
     tiles.value.clearTiles();
-    placeAllTiles();
+    await placeAllTiles();
 };
 window.save = () => JSON.stringify(game.state);
 window.drawTiles = (...args) => window.game.drawTiles(...args);
@@ -60,54 +60,64 @@ async function placeAllTiles() {
     if (!tiles.value) {
         return;
     }
+    const rerender = discardedTilesSize.value !== game.state.discardedTiles.length
+        || centerSize.value !== game.state.centerOfTable.length;
     discardedTilesSize.value = game.state.discardedTiles.length;
-    if (centerSize.value !== game.state.centerOfTable.length) {
-        centerSize.value = game.state.centerOfTable.length;
-        discardedTilesSize.value = game.state.discardedTiles.length;
+    centerSize.value = game.state.centerOfTable.length;
+    if (rerender) {
         await nextTick();
     }
-    const centerSlotPositions = tableCenter.value.getSlotPositions()
-    game.state.centerOfTable.forEach(
-        (tile, tileIndex) => setTile(tile, centerSlotPositions[tileIndex])
-    );
-
-    factoryDisplays.value.forEach((display, displayIndex) => {
-        const slotPositions = display.getSlotPositions();
-        game.state.factoryDisplays[displayIndex]
-            .forEach((tile, tileIndex) => setTile(tile, slotPositions[tileIndex]))
-    });
-
+    const promises = [];
     for (const player of game.state.players) {
         const board = playerBoards.value[player.index];
-        player.patternLines.forEach((line, index) =>
+        promises.push(...player.patternLines.map((line, index) =>
             setPlayerLineTiles(board, line, index, false)
-        );
-        player.wall.forEach((line, index) =>
+        ));
+        promises.push(...player.wall.map((line, index) =>
             setPlayerLineTiles(board, line, index, true)
-        );
-        setPlayerLineTiles(board, player.floorLine, -1, false);
+        ));
+        promises.push(setPlayerLineTiles(board, player.floorLine, -1, false));
     }
 
     const slotPositions = discardedTiles.value.getSlotPositions();
-    game.state.discardedTiles
-        .forEach((tile, tileIndex) => setTile(tile, slotPositions[tileIndex]));
+    promises.push(...game.state.discardedTiles.map(
+        (tile, tileIndex) => setTile(tile, slotPositions[tileIndex], true)
+    ));
 
-    game.state.tileBag.forEach(tile => setTile(tile, { x: 0, y: 0 }, false));
+    promises.push(...game.state.tileBag.map(
+        tile => setTile(tile, { x: 0, y: 0 }, false)
+    ));
+
+    const centerSlotPositions = tableCenter.value.getSlotPositions();
+    promises.push(...game.state.centerOfTable.map(
+        (tile, tileIndex) => setTile(tile, centerSlotPositions[tileIndex], true)
+    ));
+
+    promises.push(...factoryDisplays.value.map((display, displayIndex) => {
+        const slotPositions = display.getSlotPositions();
+        return Promise.allSettled(game.state.factoryDisplays[displayIndex].map(
+            (tile, tileIndex) => setTile(tile, slotPositions[tileIndex], true)
+        ));
+    }));
+
+    await Promise.allSettled(promises);
 }
 
-function setPlayerLineTiles(board, line, lineIndex, isWall) {
+async function setPlayerLineTiles(board, line, lineIndex, isWall) {
     if (!line.some(tile => tile)) {
         return;
     }
     const slotPositions = board.getSlotPositions(lineIndex, isWall);
-    line.forEach((tile, tileIndex) => setTile(tile, slotPositions[tileIndex]));
+    return Promise.allSettled(line.map(
+        (tile, tileIndex) => setTile(tile, slotPositions[tileIndex], true)
+    ));
 }
 
 function setTile(tile, position, isVisible = true) {
     if (!tile) {
         return;
     }
-    tiles.value.setTile(tile, { position, isVisible });
+    return tiles.value.setTile(tile, { position, isVisible });
 }
 
 function setGameState(state) {
