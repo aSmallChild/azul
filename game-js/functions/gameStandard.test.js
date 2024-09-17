@@ -1,4 +1,4 @@
-import { addPlayer, addTilesToFloorLine, dealTilesToFactoryDisplays, drawFromCenter, drawFromFactoryDisplay, fillTileBag, scoreRound } from './gameStandard.js';
+import { addPlayer, addTilesToFloorLine, dealTilesToFactoryDisplays, drawFromCenter, drawFromFactoryDisplay, scoreRound, startGame } from './gameStandard.js';
 import { createGameState, createPlayer } from '../models/game.js';
 import Tile, { createTile } from '../models/tile.js';
 import { expect } from 'chai';
@@ -37,6 +37,7 @@ describe('Standard game tests', () => {
         state = createGameState();
         const player1 = addPlayer(state, createPlayer());
         const player2 = addPlayer(state, createPlayer());
+        startGame(state);
         state.factoryDisplays = [
             [createTile(11, 0), createTile(21, 0), createTile(31, 0), createTile(41, 1)],
             [createTile(12, 1), createTile(22, 2), createTile(32, 0), createTile(42, 1)],
@@ -137,8 +138,7 @@ describe('Standard game tests', () => {
         addPlayer(state, createPlayer());
 
         it('should fill factory displays with tiles', () => {
-            fillTileBag(state);
-            dealTilesToFactoryDisplays(state);
+            startGame(state);
             expect(state.factoryDisplays.length).to.equal(7);
             state.factoryDisplays.forEach(factoryDisplay => {
                 expect(factoryDisplay.length).to.equal(4);
@@ -234,7 +234,7 @@ describe('Standard game tests', () => {
                     { id: 17, colourId: 0 }, { id: 52, colourId: 2 }, { id: 46, colourId: 2 }, { id: 48, colourId: 2 }, { id: 34, colourId: 1 }, { id: 43, colourId: 2 }, { id: 32, colourId: 1 }, { id: 9, colourId: 0 }, { id: 60, colourId: 2 }, { id: 23, colourId: 1 }, { id: 10, colourId: 0 }, { id: 40, colourId: 1 }, { id: 27, colourId: 1 }, { id: 57, colourId: 2 }, { id: 33, colourId: 1 }, { id: 62, colourId: 3 }, { id: 18, colourId: 0 }, { id: 49, colourId: 2 },
                     { id: 44, colourId: 2 }, { id: 59, colourId: 2 }, { id: 26, colourId: 1 }, { id: 6, colourId: 0 }, { id: 61, colourId: 3 }, { id: 11, colourId: 0 }, { id: 36, colourId: 1 }, { id: 25, colourId: 1 }, { id: 63, colourId: 3 }, { id: 35, colourId: 1 }, { id: 12, colourId: 0 }, { id: 53, colourId: 2 }, { id: 38, colourId: 1 }, { id: 31, colourId: 1 }, { id: 14, colourId: 0 }, { id: 22, colourId: 1 }, { id: 24, colourId: 1 }, { id: 15, colourId: 0 }, { id: 13, colourId: 0 }, { id: 16, colourId: 0 }],
                 discardedTiles: [],
-                roundIndex: 0
+                roundNumber: 0
             });
             drawFromCenter(state, state.players[0], 1, 3);
         });

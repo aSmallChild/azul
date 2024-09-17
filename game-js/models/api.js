@@ -1,9 +1,8 @@
-import emitter from './emitter.js';
 import { drawFromCenter, drawFromFactoryDisplay } from '../functions/gameStandard.js';
 import { stateAsSeenByPlayer } from './game.js';
 
 export default function createGameApi(game) {
-    const api = emitter({
+    return {
         drawTiles(factoryDisplayIndex, colourId, targetPatternLineIndex) {
             const validationError = validateParams(game, factoryDisplayIndex, colourId, targetPatternLineIndex);
             if (validationError) {
@@ -19,10 +18,7 @@ export default function createGameApi(game) {
         getState() {
             return stateAsSeenByPlayer(game.state);
         }
-    });
-    game.on('player-turn', (eventData) => api.emit('player-turn', eventData));
-    game.on('game-over', (eventData) => api.emit('game-over', eventData));
-    return api;
+    };
 }
 
 function validateParams(game, factoryDisplayIndex, colourId, targetPatternLineIndex) {

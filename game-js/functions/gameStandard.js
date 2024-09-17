@@ -4,6 +4,13 @@ function setNextPlayer(gameState) {
     gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
 }
 
+export function startGame(gameState) {
+    gameState.factoryDisplays.push([]);
+    gameState.centerOfTable.push(createTile(1, -1));
+    fillTileBag(gameState);
+    dealTilesToFactoryDisplays(gameState);
+}
+
 export function addPlayer(gameState, player) {
     const { rules: { numberOfColours }, players, factoryDisplays } = gameState;
     player.index = players.length;
@@ -23,8 +30,6 @@ export function addPlayer(gameState, player) {
             () => null
         )
     );
-    gameState?.emit('player-added', { player });
-    gameState?.emit('factory-display-added', { factoryDisplays, displaysAdded: 2 });
     return player;
 }
 
@@ -55,8 +60,7 @@ export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colour
         addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
     }
 
-    prepareNextTurn(gameState);
-    return { success: true };
+    return prepareNextTurn(gameState);
 }
 
 export function drawFromCenter(gameState, player, colourId, patternLineIndex = -1) {
@@ -91,8 +95,7 @@ export function drawFromCenter(gameState, player, colourId, patternLineIndex = -
         addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
     }
 
-    prepareNextTurn(gameState);
-    return { success: true };
+    return prepareNextTurn(gameState);
 }
 
 function isPlayerTurn(gameState, player) {
@@ -196,7 +199,7 @@ export function addTilesToFloorLine(gameState, player, tiles) {
 }
 
 export function dealTilesToFactoryDisplays(gameState) {
-    shuffleTiles(gameState.tileBag);
+    shuffle(gameState.tileBag);
     const tilesPerFactoryDisplay = gameState.rules.numberOfColours - 1;
     for (let i = 0; i < gameState.factoryDisplays.length; i++) {
         gameState.factoryDisplays[i] = gameState.tileBag.splice(0, tilesPerFactoryDisplay);
@@ -211,12 +214,9 @@ export function dealTilesToFactoryDisplays(gameState) {
 }
 
 export function scoreRound(gameState) {
-    let isGameOver = false;
+    let isGameOver = false, winners = null;
     const roundScores = gameState.players.map((player) => {
         const playerScores = countPlayerScores(gameState, player);
-        if (playerScores.length) {
-            gameState?.emit('player-scores', { player, playerScores });
-        }
         if (!isGameOver) {
             isGameOver = playerScores.some(scores => scores.rowCompleted);
         }
@@ -224,19 +224,15 @@ export function scoreRound(gameState) {
     });
 
     if (isGameOver) {
-        const winners = determineWinners(gameState, roundScores);
-        gameState?.emit('game-over', { winners });
+        winners = determineWinners(gameState, roundScores);
     }
     else {
-        prepareNextRound(gameState);
+        gameState.roundNumber++;
+        gameState.currentPlayerIndex = gameState.nextRoundStartingPlayerIndex;
+        dealTilesToFactoryDisplays(gameState);
     }
 
-    return { isGameOver, roundScores };
-}
-
-function prepareNextRound(gameState) {
-    gameState.currentPlayerIndex = gameState.nextRoundStartingPlayerIndex;
-    dealTilesToFactoryDisplays(gameState);
+    return { success: true, isGameOver, roundScores, winners };
 }
 
 function determineWinners(gameState, finalRoundScores) {
@@ -364,42 +360,37 @@ export function fillTileBag(gameState) {
             gameState.tileBag.push(createTile(gameState.tileBag.length + 1, colourId));
         }
     }
-    shuffleTiles(gameState.tileBag);
 }
 
 function refillTileBag(gameState) {
-    shuffleTiles(gameState.discardedTiles);
     gameState.tileBag = gameState.discardedTiles;
     gameState.discardedTiles = [];
 }
 
-function shuffleTiles(tiles) {
-    return tiles.sort(() => Math.random() - 0.5);
+function shuffle(array) {
+    let currentIndex = array.length;
+    while (currentIndex !== 0) {
+        const randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
 }
 
 function prepareNextTurn(gameState) {
     const isNewRound = !gameState.factoryDisplays.some(lineHasTiles)
         && !lineHasTiles(gameState.centerOfTable);
-    const result = { success: true, isNewRound, isGameOver: false };
-    if (isNewRound) {
-        const { isGameOver } = scoreRound(gameState);
-        result.isGameOver = isGameOver;
-        if (isGameOver) {
-            return result;
-        }
-        gameState.currentPlayerIndex = gameState.nextRoundStartingPlayerIndex;
-    }
-    else {
+    if (!isNewRound) {
         setNextPlayer(gameState);
+        return { success: true, isNewRound, isGameOver: false };
     }
 
-    setTimeout(() => {
-        gameState?.emit('player-turn', {
-            currentPlayerIndex: gameState.currentPlayerIndex,
-            isNewRound
-        });
-    }, 1);
-
+    const result = scoreRound(gameState);
+    if (result.isGameOver) {
+        return result;
+    }
+    result.isNewRound = true;
+    gameState.currentPlayerIndex = gameState.nextRoundStartingPlayerIndex;
+    gameState.nextRoundStartingPlayerIndex = null;
     return result;
 }
 

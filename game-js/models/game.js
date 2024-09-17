@@ -1,5 +1,3 @@
-import { createTile } from './tile.js';
-
 export function createPlayer(params) {
     return {
         index: -1,
@@ -28,7 +26,6 @@ export function createGameRules() {
 export function createGameState(params = {}) {
     const {
         rules = createGameRules(),
-        emit = () => {}
     } = params;
 
     return {
@@ -36,12 +33,11 @@ export function createGameState(params = {}) {
         players: [],
         currentPlayerIndex: 0,
         nextRoundStartingPlayerIndex: null,
-        factoryDisplays: [[]],
-        centerOfTable: [createTile(1, -1)],
+        factoryDisplays: [],
+        centerOfTable: [],
         tileBag: [],
         discardedTiles: [],
-        roundIndex: 0,
-        emit,
+        roundNumber: 1,
     };
 }
 
