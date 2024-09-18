@@ -1,4 +1,5 @@
 import { createTile } from '../models/tile.js';
+import shuffle from '../util/shuffle.js';
 
 function setNextPlayer(gameState) {
     gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
@@ -365,15 +366,6 @@ export function fillTileBag(gameState) {
 function refillTileBag(gameState) {
     gameState.tileBag = gameState.discardedTiles;
     gameState.discardedTiles = [];
-}
-
-function shuffle(array) {
-    let currentIndex = array.length;
-    while (currentIndex !== 0) {
-        const randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex--;
-        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-    }
 }
 
 function prepareNextTurn(gameState) {
