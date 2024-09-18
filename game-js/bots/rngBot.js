@@ -14,27 +14,22 @@ export default function rngBot(gameState) {
         }
 
         // try to find tiles that will be accepted in that line, else go to the next pattern line
-        const remainingColourIdsForRow = patternLine[0]?.colourId
-            ? [patternLine[0]?.colourId]
+        const remainingColourIdsForRow = patternLine[0]
+            ? [patternLine[0].colourId]
             : colourIds.filter(colourId => {
+                // wall slot for this colour is already occupied
                 if (player.wall[yIndex][getXPositionForColourOnLine(yIndex, colourId)]) {
                     return false;
                 }
+                // other lines with this colour are complete
                 return player.patternLines.every((patternLine, index) => {
-                    // todo there is an issue here with this filter
-                    if (index === yIndex) {
-                        return true;
-                    }
-                    const [firstTile] = patternLine;
-                    if (!firstTile) {
-                        return true;
-                    }
-                    return !patternLine.at(-1) || firstTile.colourId !== colourId;
+                    return index === yIndex // skip checking the current line, we already know it's empty
+                        || patternLine.at(-1) // other line is full and doesn't restrict what we do on the current line
+                        || patternLine[0]?.colourId !== colourId; // either there are no tiles in the line or there are but they're a different colour
                 });
             });
         for (const colourId of remainingColourIdsForRow) {
             // find a display with that colour
-            // todo { success: false, message: "There is already a tile of a different colour in that pattern line." }
             for (const displayId of displayIds) {
                 const display = gameState.factoryDisplays?.[displayId] ?? gameState.centerOfTable;
                 if (!display?.[0]) {
@@ -79,16 +74,8 @@ function shuffle(array) {
     return array;
 }
 
-function getColourForWallPosition(x, y, numberOfColours = 5) {
-    return y >= x ? y - x : numberOfColours + y - x;
-}
-
 function getXPositionForColourOnLine(y, colourId, numberOfColours = 5) {
     return (y + colourId) % numberOfColours;
-}
-
-function hasTiles(line) {
-    return line.some(tile => tile);
 }
 
 function isFull(line) {

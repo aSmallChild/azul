@@ -154,7 +154,7 @@ function canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex
         };
     }
 
-    const otherSameColoursLinesAreComplete = player.patternLines.every((patternLine, index) => {
+    const otherSameColourLinesAreComplete = player.patternLines.every((patternLine, index) => {
         if (index === patternLineIndex) {
             return true;
         }
@@ -165,7 +165,7 @@ function canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex
         return patternLine.at(-1) || firstTile.colourId !== colourId;
     });
 
-    if (!otherSameColoursLinesAreComplete) {
+    if (!otherSameColourLinesAreComplete) {
         return {
             success: false,
             message: 'There is another pattern line with that colour that is incomplete.'
