@@ -90,34 +90,8 @@ export function drawTiles(gameState, displayId, colourId, patternLineIndex, play
         gameState.centerOfTable = remainingTiles;
     }
     else {
-        addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
-    }
-
-    return prepareNextTurn(gameState);
-}
-
-export function drawFromCenter(gameState, player, colourId, patternLineIndex = -1) {
-    const isTurnResult = isPlayerTurn(gameState, player);
-    if (!isTurnResult.success) {
-        return isTurnResult;
-    }
-
-    const center = gameState.centerOfTable;
-    const { tiles = null, ...drawResult } = canDrawFromLocation(center, colourId, 'in the center of the table');
-    if (!drawResult.success) {
-        return drawResult;
-    }
-
-    if (patternLineIndex >= 0) {
-        const placementResult = canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex);
-        if (!placementResult.success) {
-            return placementResult;
-        }
-    }
-
-    if (center[0].colourId === -1) {
-        addTilesToFloorLine(gameState, player, [center.shift()]);
-        gameState.nextRoundStartingPlayerIndex = player.index;
+        gameState.centerOfTable.push(...remainingTiles);
+        display.splice(0, display.length);
     }
 
     if (patternLineIndex < 0) {
@@ -277,21 +251,21 @@ function determineWinners(gameState, finalRoundScores) {
             continue;
         }
 
-        if (player.score === winners[0].score) {
-            const playerCompletedRows = finalRoundScores[player.index]
-                .reduce((rowsCompleted, scores) => rowsCompleted + (scores.rowCompleted ? 1 : 0), 0);
-            const winnerCompletedRows = finalRoundScores[winners[0].index]
-                .reduce((rowsCompleted, scores) => rowsCompleted + (scores.rowCompleted ? 1 : 0), 0);
-            if (winnerCompletedRows > playerCompletedRows) {
-                continue;
-            }
+        if (player.score < winners[0].score) {
+            continue;
+        }
 
-            if (playerCompletedRows === winnerCompletedRows) {
-                winners.push(player);
-                continue;
-            }
-
+        const playerCompletedRows = finalRoundScores[player.index]
+            .reduce((rowsCompleted, scores) => rowsCompleted + (scores.rowCompleted ? 1 : 0), 0);
+        const winnerCompletedRows = finalRoundScores[winners[0].index]
+            .reduce((rowsCompleted, scores) => rowsCompleted + (scores.rowCompleted ? 1 : 0), 0);
+        if (winnerCompletedRows < playerCompletedRows) {
             winners = [player];
+            continue;
+        }
+
+        if (playerCompletedRows === winnerCompletedRows) {
+            winners.push(player);
         }
     }
 
@@ -362,10 +336,10 @@ function scoreNewTile(gameState, player, tile, x, y) {
     let rowScore = 0, columnScore = 0, colourScore = 0;
     let rowScored = false, columnScored = false;
     for (let i = 0; i < numberOfColours; i++) {
-        const [rowTileScore, finishedScoringRow] = countTile(rowScored, player.wall[i][x], i >= y);
+        const [rowTileScore, finishedScoringRow] = countTile(rowScored, player.wall[y][i], i >= x);
         rowScore = rowTileScore === -1 ? 0 : rowScore + rowTileScore;
         rowScored = finishedScoringRow;
-        const [columnTileScore, finishedScoringColumn] = countTile(columnScored, player.wall[y][i], i >= x);
+        const [columnTileScore, finishedScoringColumn] = countTile(columnScored, player.wall[i][x], i >= y);
         columnScore = columnTileScore === -1 ? 0 : columnScore + columnTileScore;
         columnScored = finishedScoringColumn;
         const colourX = getXPositionForColourOnLine(gameState, i, tile.colourId);

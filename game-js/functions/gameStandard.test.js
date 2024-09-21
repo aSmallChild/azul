@@ -270,7 +270,7 @@ describe('Standard game tests', () => {
                     {
                         index: 0,
                         name: 'PLAYER ONE',
-                        score: 46,
+                        score: 51,
                         patternLines: [
                             [{ colourId: 0 }],
                             [null, null],
@@ -290,7 +290,7 @@ describe('Standard game tests', () => {
                     {
                         index: 1,
                         name: 'PLAYER 2',
-                        score: 26,
+                        score: 42,
                         patternLines: [
                             [{ colourId: 0 }],
                             [{ colourId: 4 }, { colourId: 4 }],
