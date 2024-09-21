@@ -34,28 +34,60 @@ export function addPlayer(gameState, player) {
     return player;
 }
 
-export function drawFromFactoryDisplay(gameState, factoryDisplay, player, colourId, patternLineIndex = -1) {
+export function canDrawTiles(gameState, displayId, colourId, patternLineId, playerId = gameState.currentPlayerIndex) {
+    const player = gameState.players[playerId];
+
     const isTurnResult = isPlayerTurn(gameState, player);
     if (!isTurnResult.success) {
         return isTurnResult;
     }
 
-    const { tiles = null, ...drawResult } = canDrawFromLocation(factoryDisplay, colourId, 'that factory display');
+    if (displayId >= gameState.factoryDisplays.length) {
+        return {
+            success: false,
+            message: 'Cannot draw tiles, invalid display specified.'
+        };
+    }
+
+    if (patternLineId >= player.patternLines.length) {
+        return {
+            success: false,
+            message: 'Cannot draw tiles, invalid pattern line specified.'
+        };
+    }
+
+    const display = displayId < 0 ? gameState.centerOfTable : gameState.factoryDisplays[displayId];
+    const { tiles = null, ...drawResult } = canDrawFromLocation(display, colourId, displayId < 0 ? 'the center of the table' : 'that factory display');
     if (!drawResult.success) {
         return drawResult;
     }
 
-    if (patternLineIndex >= 0) {
-        const placementResult = canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex);
+    if (patternLineId >= 0) {
+        const placementResult = canPlaceTileInPatternLine(gameState, player, colourId, patternLineId);
         if (!placementResult.success) {
             return placementResult;
         }
     }
 
-    gameState.centerOfTable = gameState.centerOfTable.concat(factoryDisplay.filter(tile => tile.colourId !== colourId));
-    factoryDisplay.splice(0, factoryDisplay.length);
-    if (patternLineIndex < 0) {
-        addTilesToFloorLine(gameState, player, tiles);
+    return { success: true, tiles };
+}
+
+export function drawTiles(gameState, displayId, colourId, patternLineIndex, playerId = gameState.currentPlayerIndex) {
+    const canDrawResult = canDrawTiles(gameState, displayId, colourId, patternLineIndex, playerId);
+    if (!canDrawResult.success) {
+        return canDrawResult;
+    }
+
+    const player = gameState.players[playerId];
+    const display = displayId < 0 ? gameState.centerOfTable : gameState.factoryDisplays[displayId];
+    const remainingTiles = display.filter(tile => tile.colourId !== colourId);
+    const startTile = remainingTiles[0]?.colourId === -1 ? remainingTiles.splice(0, 1) : null;
+    if (startTile) {
+        addTilesToFloorLine(gameState, player, startTile);
+        gameState.nextRoundStartingPlayerIndex = player.index;
+    }
+    if (displayId < 0) {
+        gameState.centerOfTable = remainingTiles;
     }
     else {
         addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
@@ -88,12 +120,11 @@ export function drawFromCenter(gameState, player, colourId, patternLineIndex = -
         gameState.nextRoundStartingPlayerIndex = player.index;
     }
 
-    gameState.centerOfTable = center.filter(tile => tile.colourId !== colourId);
     if (patternLineIndex < 0) {
-        addTilesToFloorLine(gameState, player, tiles);
+        addTilesToFloorLine(gameState, player, canDrawResult.tiles);
     }
     else {
-        addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], tiles);
+        addTilesToPatternLine(gameState, player, player.patternLines[patternLineIndex], canDrawResult.tiles);
     }
 
     return prepareNextTurn(gameState);

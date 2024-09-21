@@ -1,4 +1,4 @@
-import { drawFromCenter, drawFromFactoryDisplay } from '../functions/gameStandard.js';
+import { drawTiles } from '../functions/gameStandard.js';
 import { stateAsSeenByPlayer } from './game.js';
 
 export default function createGameApi(game) {
@@ -8,12 +8,7 @@ export default function createGameApi(game) {
             if (validationError) {
                 return validationError;
             }
-            const player = game.state.players[game.state.currentPlayerIndex];
-            if (factoryDisplayIndex < 0) {
-                return drawFromCenter(game.state, player, colourId, targetPatternLineIndex);
-            }
-            const factoryDisplay = game.state.factoryDisplays[factoryDisplayIndex];
-            return drawFromFactoryDisplay(game.state, factoryDisplay, player, colourId, targetPatternLineIndex)
+            return drawTiles(game.state, factoryDisplayIndex, colourId, targetPatternLineIndex);
         },
         getState() {
             return stateAsSeenByPlayer(game.state);

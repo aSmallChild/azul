@@ -1,4 +1,4 @@
-import { addPlayer, addTilesToFloorLine, dealTilesToFactoryDisplays, drawFromCenter, drawFromFactoryDisplay, scoreRound, startGame } from './gameStandard.js';
+import { addPlayer, addTilesToFloorLine, dealTilesToFactoryDisplays, drawTiles, scoreRound, startGame } from './gameStandard.js';
 import { createGameState, createPlayer } from '../models/game.js';
 import Tile, { createTile } from '../models/tile.js';
 import { expect } from 'chai';
@@ -47,10 +47,9 @@ describe('Standard game tests', () => {
         ];
 
         it('turn 1 - draw tiles from factory display', () => {
-            const factoryDisplay = state.factoryDisplays[0];
-            const result = drawFromFactoryDisplay(state, factoryDisplay, player1, 0, 2);
+            const result = drawTiles(state, 0, 0, 2);
             expect(result.success, result.message).to.be.true;
-            expect(factoryDisplay.length).to.equal(0);
+            expect(state.factoryDisplays[0].length).to.equal(0);
             expect(player1.patternLines[0]).to.deep.equal([null]);
             expect(player1.patternLines[1]).to.deep.equal([null, null]);
             expect(player1.patternLines[2]).to.have.length(3);
@@ -64,20 +63,17 @@ describe('Standard game tests', () => {
         });
 
         it('turn 2 - fails to draw tiles from same display', () => {
-            const factoryDisplay = state.factoryDisplays[0];
-            const result = drawFromFactoryDisplay(state, factoryDisplay, player1, 0, 2);
+            const result = drawTiles(state, 0, 0, 2);
             expect(result.success).to.be.false;
         });
 
         it('turn 2 - fails to draw colour that is not in the display', () => {
-            const factoryDisplay = state.factoryDisplays[1];
-            const result = drawFromFactoryDisplay(state, factoryDisplay, player2, 4, 2);
+            const result = drawTiles(state, 1, 4, 2);
             expect(result.success).to.be.false;
         });
 
         it('turn 2 - draws too many tiles and overflows onto floor line', () => {
-            const factoryDisplay = state.factoryDisplays[1];
-            const result = drawFromFactoryDisplay(state, factoryDisplay, player2, 1, 0);
+            const result = drawTiles(state, 1, 1, 0);
             expect(result.success).to.be.true;
             expect(player2.patternLines[0]).to.have.length(1);
             expect(player2.patternLines[0][0].colourId).to.equal(1);
@@ -96,7 +92,7 @@ describe('Standard game tests', () => {
         });
 
         it('turn 3 - draws from center of table', () => {
-            const result = drawFromCenter(state, player1, 2, 1);
+            const result = drawTiles(state, -1, 2, 1);
             expect(result.success).to.be.true;
             expect(player1.patternLines[0]).to.deep.equal([null]);
             expect(player1.patternLines[1]).to.have.length(2);
@@ -112,21 +108,19 @@ describe('Standard game tests', () => {
         });
 
         it('turn 3 - player denied playing out of turn', () => {
-            const result1 = drawFromCenter(state, player1, 2, 1);
+            const result1 = drawTiles(state, -1, 2, 1);
             expect(result1.success).to.be.false;
-            const result2 = drawFromFactoryDisplay(state, state.factoryDisplays[2], player1, 1, 0);
+            const result2 = drawTiles(state, 2, 1, 0);
             expect(result2.success).to.be.false;
         });
 
         it('turn 4 - a good move', () => {
-            const factoryDisplay = state.factoryDisplays[2];
-            const result = drawFromFactoryDisplay(state, factoryDisplay, player2, 3, 1);
+            const result = drawTiles(state, 2, 3, 1);
             expect(result.success).to.be.true;
         });
 
         it('turn 5 - denied starting a second row when another row of that colour is incomplete', () => {
-            const factoryDisplay = state.factoryDisplays[3];
-            const result = drawFromFactoryDisplay(state, factoryDisplay, player1, 2, 3);
+            const result = drawTiles(state, 3, 2, 3);
             expect(result.success).to.be.false;
         });
     });
@@ -236,7 +230,7 @@ describe('Standard game tests', () => {
                 discardedTiles: [],
                 roundNumber: 0
             });
-            drawFromCenter(state, state.players[0], 1, 3);
+            drawTiles(state, -1, 1, 3);
         });
 
         it('should move tiles to the wall', () => {
@@ -264,6 +258,71 @@ describe('Standard game tests', () => {
             expect(tile).to.be.instanceOf(Tile);
             expect(tile.colourId).to.eq(-1);
             expect(state.discardedTiles.find(tile => tile.id === 1)).to.be.undefined;
+        });
+    });
+
+    describe('determineWinner', () => {
+        let state;
+        before(() => {
+            state = loadGame({
+                rules: { numberOfColours: 5, tilesPerColour: 20, tilesPerFactoryDisplay: 4, floorLinePenalties: [-1, -1, -2, -2, -2, -3, -3], rowPoints: 2, columnPoints: 7, colourPoints: 10, firstPickFromCentre: -1 },
+                players: [
+                    {
+                        index: 0,
+                        name: 'PLAYER ONE',
+                        score: 46,
+                        patternLines: [
+                            [{ colourId: 0 }],
+                            [null, null],
+                            [{ colourId: 3 }, { colourId: 3 }, { colourId: 3 }],
+                            [null, null, null, null],
+                            [null, null, null, null, null]
+                        ],
+                        wall: [
+                            [null, { colourId: 1 }, { colourId: 2 }, { colourId: 3 }, { colourId: 4 }],
+                            [{ colourId: 4 }, null, { colourId: 1 }, { colourId: 2 }, { colourId: 3 }],
+                            [null, { colourId: 4 }, { colourId: 0 }, { colourId: 1 }, { colourId: 2 }],
+                            [{ colourId: 2 }, null, { colourId: 4 }, { colourId: 0 }, { colourId: 1 }],
+                            [{ colourId: 1 }, { colourId: 2 }, { colourId: 3 }, null, { colourId: 0 }]
+                        ],
+                        floorLine: [{ colourId: -1 }]
+                    },
+                    {
+                        index: 1,
+                        name: 'PLAYER 2',
+                        score: 26,
+                        patternLines: [
+                            [{ colourId: 0 }],
+                            [{ colourId: 4 }, { colourId: 4 }],
+                            [{ colourId: 3 }, { colourId: 3 }, { colourId: 3 }],
+                            [{ colourId: 3 }, { colourId: 3 }, { colourId: 3 }, null],
+                            [null, null, null, null, null]
+                        ],
+                        wall: [
+                            [null, { colourId: 1 }, { colourId: 2 }, { colourId: 3 }, { colourId: 4 }],
+                            [null, { colourId: 0 }, { colourId: 1 }, { colourId: 2 }, { colourId: 3 }],
+                            [null, { colourId: 4 }, { colourId: 0 }, { colourId: 1 }, { colourId: 2 }],
+                            [null, null, { colourId: 4 }, { colourId: 0 }, { colourId: 1 }],
+                            [{ colourId: 1 }, { colourId: 2 }, null, null, { colourId: 0 }]
+                        ],
+                        floorLine: []
+                    }],
+                currentPlayerIndex: 1,
+                nextRoundStartingPlayerIndex: 0,
+                factoryDisplays: [[], [], [], [], []],
+                centerOfTable: [],
+                tileBag: [{ colourId: 0 }, { colourId: 3 }, { colourId: 0 }, { colourId: 2 }, { colourId: 3 }, { colourId: 1 }, { colourId: 4 }, { colourId: 1 }, { colourId: 4 }, { colourId: 0 }, { colourId: 3 }, { colourId: 0 }, { colourId: 4 }, { colourId: 3 }, { colourId: 4 }, { colourId: 4 }],
+                discardedTiles: [{ colourId: 2 }, { colourId: 2 }, { colourId: 2 }, { colourId: 3 }, { colourId: 3 }, { colourId: 1 }, { colourId: 4 }, { colourId: 2 }, { colourId: 2 }, { colourId: 2 }, { colourId: 2 }, { colourId: 2 }, { colourId: 2 }, { colourId: 0 }, { colourId: 0 }, { colourId: 1 }, { colourId: 1 }, { colourId: 1 }, { colourId: 1 }, { colourId: 1 }, { colourId: 1 }, { colourId: 1 }, { colourId: 0 }, { colourId: 0 }, { colourId: 0 }, { colourId: 0 }, { colourId: 4 }, { colourId: 4 }, { colourId: 4 }, { colourId: 4 }, { colourId: 4 }],
+                roundNumber: 9
+            });
+        });
+
+        it('player 2 should win', () => {
+            const result = scoreRound(state);
+            expect(state.players[0].score).to.eq(78);
+            expect(state.players[1].score).to.eq(78);
+            expect(result.winners).to.have.length(1);
+            expect(result.winners[0].index).to.eq(1);
         });
     });
 });
