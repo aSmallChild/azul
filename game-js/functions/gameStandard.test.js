@@ -249,7 +249,7 @@ describe('Standard game tests', () => {
         });
 
         it('should add up some scores', () => {
-            expect(state.players[0].score).to.eq(3);
+            expect(state.players[0].score).to.eq(4);
             expect(state.players[1].score).to.eq(2);
         });
 

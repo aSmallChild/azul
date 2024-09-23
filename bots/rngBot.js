@@ -36,7 +36,7 @@ export default function rngBot(gameState) {
                     continue;
                 }
                 if (hasColour(display, colourId)) {
-                    return { lineId: yIndex, colourId, displayId };
+                    return { displayId, colourId, lineId: yIndex };
                 }
             }
 
@@ -51,17 +51,17 @@ export default function rngBot(gameState) {
         }
         const randomTile = display[Math.floor(Math.random() * display.length)];
         if (randomTile?.colourId !== -1) {
-            return { lineId: -1, colourId: randomTile.colourId, displayId };
+            return { displayId, colourId: randomTile.colourId, lineId: -1 };
         }
 
         const tile = display[0].colourId !== -1 ? display[0] : display[1];
         if (!tile) {
             continue;
         }
-        return { lineId: -1, colourId: tile.colourId, displayId };
+        return { displayId, colourId: tile.colourId, lineId: -1 };
     }
 
-    throw new Error('could not find a move to make!!');
+    return null;
 }
 
 function shuffle(array) {

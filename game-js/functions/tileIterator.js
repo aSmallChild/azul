@@ -1,5 +1,5 @@
 export default function* tileIterator(gameState) {
-    for (const line of parentArrayIterator(gameState)) {
+    for (const line of tileListIterator(gameState)) {
         yield* lineIterator(line);
     }
 }
@@ -12,7 +12,7 @@ function* lineIterator(line) {
     }
 }
 
-function* parentArrayIterator(gameState) {
+export function* tileListIterator(gameState) {
     for (const player of gameState.players) {
         for (const line of player.patternLines) {
             yield line;
@@ -33,7 +33,7 @@ function* parentArrayIterator(gameState) {
 }
 
 export function transformTiles(gameState, callback) {
-    for (const line of parentArrayIterator(gameState)) {
+    for (const line of tileListIterator(gameState)) {
         mapLine(line, callback);
     }
 }
