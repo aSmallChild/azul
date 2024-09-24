@@ -1,5 +1,4 @@
 import { drawTiles } from '../functions/gameStandard.js';
-import { stateAsSeenByPlayer } from './game.js';
 
 export default function createGameApi(game) {
     return {
@@ -11,7 +10,7 @@ export default function createGameApi(game) {
             return drawTiles(game.state, factoryDisplayIndex, colourId, targetPatternLineIndex);
         },
         getState() {
-            return stateAsSeenByPlayer(game.state);
+            return structuredClone(game.state);
         }
     };
 }

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "azul": "file:../game-js",
+    "bots": "file:../bots",
     "motion": "^10.18.0",
     "vue": "^3.4.21"
   },

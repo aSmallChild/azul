@@ -241,7 +241,7 @@ export function scoreRound(gameState) {
     return { success: true, isGameOver, roundScores, winners };
 }
 
-function determineWinners(gameState, finalRoundScores) {
+export function determineWinners(gameState, finalRoundScores) {
     let winners = [gameState.players[0]];
 
     for (let i = 1; i < gameState.players.length; i++) {

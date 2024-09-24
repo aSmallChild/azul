@@ -1,0 +1,8 @@
+{
+    "name": "ml5-js",
+    "type": "module",
+    "dependencies": {
+        "azul": "file:../game-js",
+        "@tensorflow/tfjs": "^4.21.0"
+    }
+}

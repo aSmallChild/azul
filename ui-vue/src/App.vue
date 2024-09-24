@@ -9,6 +9,7 @@ import FactoryDisplay from './components/FactoryDisplay.vue';
 import emitter from 'azul/models/emitter.js';
 import createGameApi from 'azul/models/api.js';
 import { getColourByName } from './util/colours.js';
+import minimaxBot from 'bots/minimaxBot.js';
 
 const players = ref([]);
 const currentPlayerIndex = ref(0)
@@ -46,6 +47,29 @@ window.save = () => JSON.stringify(game.state);
 window.drawTiles = async (...args) => {
     const result = window.game.drawTiles(...args);
     await placeAllTiles();
+    return result;
+};
+
+window.player2 = (state) => minimaxBot(state, 4, 4);
+
+window.player1 = async (...args) => {
+    if (!window.player2) {
+        return { success: false, message: 'player 2 not registered' }
+    }
+    if (game.state.currentPlayerIndex !== 0) {
+        return { success: false, message: 'not your turn!!!!' }
+    }
+    const result = window.game.drawTiles(...args);
+    await placeAllTiles();
+    if (result.success) {
+        setTimeout(async () => {
+            const move = window.player2(game.state);
+            const result = await drawTiles(move.displayId, move.colourId, move.lineId);
+            if (!result.success) {
+                console.warn('Bot move failed: ', result);
+            }
+        }, 100);
+    }
     return result;
 }
 
