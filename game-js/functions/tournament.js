@@ -24,11 +24,20 @@ export function hostTournament(players = [], params = {}) {
         startGame(state);
         let turnResult;
         do {
-            const { displayId, colourId, lineId } = players[state.currentPlayerIndex].drawTiles(state);
+            const player = players[state.currentPlayerIndex];
+            const move = player.drawTiles(state);
+            if (!move) {
+                const message = `Player ${player.name} could not figure out what move to make!`;
+                console.error(message);
+                return {
+                    success: false,
+                    message
+                };
+            }
+            const { displayId, colourId, lineId } = move;
             turnResult = drawTiles(state, displayId, colourId, lineId);
             if (!turnResult.success) {
-                const player = players[state.currentPlayerIndex];
-                const message = `Player ${player.name} failed to make a valid move!`;
+                const message = `Player ${player.name} attempted an invalid move!`;
                 console.error(message);
                 return {
                     success: false,
@@ -50,12 +59,12 @@ export function hostTournament(players = [], params = {}) {
     console.info(`Tournament complete ${duration}ms`);
     const placings = players.map(player => player);
     placings.sort((a, b) => {
-        const winDifference = a.wins - b.wins;
+        const winDifference = b.wins - a.wins;
         if (winDifference) {
             return winDifference;
         }
 
-        return a.totalScore - b.totalScore;
+        return b.totalScore - a.totalScore;
     });
     placings.forEach((player, i) => {
         console.info(`${i + 1}${placingSuffix(i)} place: ${player.name} with ${player.wins} wins and an average score of ${Math.round(player.totalScore / iterations)}`);

@@ -18,13 +18,13 @@ function findMoveThatLeadsToBestOutcome(immediateMoves, playerId) {
     }
     sortMoves(allMoves, playerId);
     let immediateMove = allMoves[0];
-    while (!immediateMoves.includes(immediateMove)) {
-        immediateMove = immediateMove.lastMove;
+    while (immediateMove.previousNode) {
+        immediateMove = immediateMove.previousNode;
     }
     return immediateMove;
 }
 
-function buildTree(gameState, lastMove = null, depth = 3, moves = 3) {
+function buildTree(gameState, previousNode = null, depth = 3, moves = 3) {
     if (depth < 0) {
         return null;
     }
@@ -50,14 +50,18 @@ function buildTree(gameState, lastMove = null, depth = 3, moves = 3) {
         else if (!winners) {
             winners = determineWinners(state, roundScores);
         }
-        possibleMoves.push({
+        const node = {
             move,
-            lastMove,
+            previousNode,
             roundScores,
             winnerIds: winners.map(winner => winner.index),
             isGameOver,
-            nextMoves: isGameOver ? null : buildTree(state, move, depth - 1, moves)
-        });
+            nextMoves: null
+        }
+        if (isGameOver) {
+            buildTree(state, node, depth - 1, moves);
+        }
+        possibleMoves.push(node);
     }
 
     return possibleMoves.length ? possibleMoves : null;
@@ -67,12 +71,11 @@ function sortMoves(moves, currentPlayerId) {
     moves.sort((a, b) => {
         const wonLastMove = wonInMoveRank(a, currentPlayerId);
         const wonCurrentMove = wonInMoveRank(b, currentPlayerId);
-        const winnerDifference = wonLastMove - wonCurrentMove;
+        const winnerDifference = wonCurrentMove - wonLastMove;
         if (winnerDifference) {
-            return winnerDifference >= 0 ? a : b;
+            return winnerDifference;
         }
-        const scoreDifference = a.roundScores[currentPlayerId].score - b.roundScores[currentPlayerId].score;
-        return scoreDifference >= 0 ? a : b;
+        return b.roundScores[currentPlayerId].score - a.roundScores[currentPlayerId].score;
     });
 }
 
