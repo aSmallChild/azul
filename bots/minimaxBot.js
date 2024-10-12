@@ -1,23 +1,23 @@
-import rngBot from './rngBot.js';
+import getPossibleMoves from './getPossibleMoves.js';
 import { determineWinners, drawTiles, scoreRound } from 'azul/functions/gameStandard.js';
 
-export default function minimaxBot(gameState, depth = 4, moves = 4) {
-    const immediateMoves = buildTree(gameState, null, depth, moves);
-    const nextMove = findMoveThatLeadsToBestOutcome(immediateMoves, gameState.currentPlayerIndex);
+export default function minimaxBot(gameState, depth = 10, moves = 2) {
+    const immediateNodes = buildTree(gameState, null, depth, moves);
+    const nextMove = findNodeThatLeadsToBestOutcome(immediateNodes, gameState.currentPlayerIndex);
     return nextMove.move;
 }
 
-function findMoveThatLeadsToBestOutcome(immediateMoves, playerId) {
-    const allMoves = [];
-    allMoves.push(...immediateMoves);
-    for (let i = 0; i < allMoves.length; i++) {
-        const currentMove = allMoves[i];
+function findNodeThatLeadsToBestOutcome(immediateNodes, playerId) {
+    const allNodes = [];
+    allNodes.push(...immediateNodes);
+    for (let i = 0; i < allNodes.length; i++) {
+        const currentMove = allNodes[i];
         if (currentMove.nextMoves) {
-            allMoves.push(...currentMove.nextMoves);
+            allNodes.push(...currentMove.nextMoves);
         }
     }
-    sortMoves(allMoves, playerId);
-    let immediateMove = allMoves[0];
+    sortNodes(allNodes, playerId);
+    let immediateMove = allNodes[0];
     while (immediateMove.previousNode) {
         immediateMove = immediateMove.previousNode;
     }
@@ -28,16 +28,14 @@ function buildTree(gameState, previousNode = null, depth = 3, moves = 3) {
     if (depth < 0) {
         return null;
     }
-    const possibleMoves = [];
-    for (let i = 0; i < moves; i++) {
-        const move = rngBot(gameState); // todo allow rngBot to return more moves in a single call
-        if (!move) {
-            break;
-        }
+
+    const nodes = [];
+    for (const move of getPossibleMoves(gameState)) {
         const state = structuredClone(gameState);
         const result = drawTiles(state, move.displayId, move.colourId, move.lineId);
         let {
             isGameOver,
+            isNewRound,
             roundScores = null,
             winners = null
         } = result;
@@ -56,18 +54,27 @@ function buildTree(gameState, previousNode = null, depth = 3, moves = 3) {
             roundScores,
             winnerIds: winners.map(winner => winner.index),
             isGameOver,
+            isNewRound,
+            state,
             nextMoves: null
         }
-        if (isGameOver) {
-            buildTree(state, node, depth - 1, moves);
-        }
-        possibleMoves.push(node);
+        nodes.push(node);
+    }
+    if (!nodes.length) {
+        return null;
     }
 
-    return possibleMoves.length ? possibleMoves : null;
+    sortNodes(nodes, nodes[0].state.currentPlayerIndex);
+    const topNodes = nodes.slice(0, moves);
+    for (const node of topNodes) {
+        if (!node.isGameOver && !node.isNewRound) {
+            buildTree(node.state, node, depth - 1, moves);
+        }
+    }
+    return topNodes;
 }
 
-function sortMoves(moves, currentPlayerId) {
+function sortNodes(moves, currentPlayerId) {
     moves.sort((a, b) => {
         const wonLastMove = wonInMoveRank(a, currentPlayerId);
         const wonCurrentMove = wonInMoveRank(b, currentPlayerId);
