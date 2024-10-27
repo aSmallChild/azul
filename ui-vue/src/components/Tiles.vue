@@ -9,7 +9,7 @@ defineExpose({
     clearTiles
 });
 
-const emit = defineEmits(['mounted']);
+const emit = defineEmits(['mounted', 'tile-click']);
 const tileContainer = ref();
 const game = inject('game');
 const draggedTiles = [];
@@ -163,6 +163,7 @@ function createTileElement(tile) {
     element.style.setProperty('--a-tile-colour', getColour(tile.colourId).hex);
     element.addEventListener('dragstart', event => dragStart(event, tile));
     element.addEventListener('dragend', event => dragEnd(event, tile));
+    element.addEventListener('click', () => emit('tile-click', tile.id));
     if (tile.colourId < 0) {
         element.innerHTML = '1<small>st</small>'
     }

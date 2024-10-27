@@ -14,6 +14,7 @@ const props = defineProps({
         default: false
     }
 });
+const emit = defineEmits(['line-click']);
 const game = inject('game');
 const patternLineRefs = ref(null);
 const wallLineRefs = ref(null);
@@ -52,6 +53,7 @@ const vTileLine = {
             event.stopPropagation();
             emitDragEvent('line-drop', lineIndex, event);
         });
+        element.addEventListener('click', () => emit('line-click', lineIndex));
     }
 }
 

@@ -47,7 +47,7 @@ export function hostTournament(players = [], params = {}) {
         } while (!turnResult.isGameOver);
         const gameDuration = Date.now() - gameStart;
 
-        console.info(`Game ${i + 1} complete, ${turnResult.winners.length} winner(s), ${turnResult.winners.map(winner => winner.name).join(', ')} in ${gameDuration}ms`);
+        console.info(`Game ${i + 1} complete, ${turnResult.winners.length} winner(s), ${turnResult.winners.map(winner => `${winner.name} (${winner.score} points)`).join(', ')} in ${gameDuration}ms`);
 
         for (const winner of turnResult.winners) {
             players[winner.index].totalScore += winner.score;

@@ -173,7 +173,7 @@ function canPlaceTileInPatternLine(gameState, player, colourId, patternLineIndex
     if (!otherSameColourLinesAreComplete) {
         return {
             success: false,
-            message: 'There is another pattern line with that colour that is incomplete.'
+            message: 'There is another incomplete pattern line with that colour.'
         };
     }
 

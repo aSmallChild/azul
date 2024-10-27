@@ -2,6 +2,28 @@ export function getXPositionForColourOnLine(y, colourId, numberOfColours = 5) {
     return (y + colourId) % numberOfColours;
 }
 
+export function countDisplayTiles(display, colourId) {
+    let count = 0;
+    for (const tile of display) {
+        if (tile?.colourId !== colourId) {
+            continue;
+        }
+        count++;
+    }
+    return count;
+}
+
+export function countLineTiles(line) {
+    let count = 0;
+    for (const tile of line) {
+        if (!tile) {
+            break;
+        }
+        count++;
+    }
+    return count;
+}
+
 export function isFull(line) {
     return !line.some(tile => !tile);
 }

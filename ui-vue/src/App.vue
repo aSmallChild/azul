@@ -25,6 +25,7 @@ const game = {
     state: createGameState(),
     highlight
 };
+let selectedTileId;
 let midPlacement = false;
 addPlayer(game.state, createPlayer({ name: 'PLAYER ONE' }));
 addPlayer(game.state, createPlayer({ name: 'PLAYER 2' }));
@@ -162,16 +163,48 @@ function setGameState(state) {
     game.state = state;
     placeAllTiles();
 }
+
+function tileSelect(tileId) {
+    selectedTileId = tileId;
+}
+
+async function lineSelect(lineId, playerId) {
+    if (!selectedTileId || playerId !== currentPlayerIndex.value) {
+        return;
+    }
+    const tileAndDisplay = findDisplayTile(selectedTileId);
+    if (!tileAndDisplay) {
+        return;
+    }
+    const result = await drawTiles(tileAndDisplay.displayId, tileAndDisplay.tile.colourId, lineId);
+    console.info(result);
+    return result;
+}
+
+function findDisplayTile(tileId) {
+    for (let i = 0; i < game.state.factoryDisplays.length; i++) {
+        const tile = game.state.factoryDisplays[i].find(t => t.id === tileId);
+        if (tile) {
+            return {tile, displayId: i};
+        }
+    }
+    const tile = game.state.centerOfTable.find(t => t.id === tileId);
+    if (tile.colourId >= 0) {
+        return {tile, displayId: -1};
+    }
+    return null;
+}
 </script>
 
 <template>
-    <tiles ref="tiles" @mounted="placeAllTiles"/>
+    <tiles ref="tiles" @mounted="placeAllTiles" @tile-click="tileSelect"/>
     <board
         v-for="player of players"
         :player="player"
         :is-current="currentPlayerIndex === player.index"
         ref="playerBoards"
         :key="player.index"
+        @line-click="lineSelect($event, player.index)"
     />
     <div style="display: flex; gap: var(--a-gap); margin: var(--a-gap); flex-wrap: wrap;">
         <factory-display
