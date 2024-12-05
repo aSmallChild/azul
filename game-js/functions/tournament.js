@@ -17,6 +17,7 @@ export function hostTournament(players = [], params = {}) {
         drawTiles
     } = params;
     const start = Date.now();
+    console.info(`Beginning tournament with ${iterations} games.`);
     for (let i = 0; i < iterations; i++) {
         const gameStart = Date.now();
         const state = createGame();

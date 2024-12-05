@@ -219,10 +219,10 @@ export function dealTilesToFactoryDisplays(gameState) {
     }
 }
 
-export function scoreRound(gameState) {
+export function scoreRound(gameState, updateBoard = true) {
     let isGameOver = false, winners = null;
     const roundScores = gameState.players.map((player) => {
-        const playerScores = countPlayerScores(gameState, player);
+        const playerScores = countPlayerScores(gameState, player, updateBoard);
         if (!isGameOver) {
             isGameOver = playerScores.some(scores => scores.rowCompleted);
         }
@@ -232,13 +232,25 @@ export function scoreRound(gameState) {
     if (isGameOver) {
         winners = determineWinners(gameState, roundScores);
     }
-    else {
+    else if (updateBoard) {
         gameState.roundNumber++;
         gameState.currentPlayerIndex = gameState.nextRoundStartingPlayerIndex;
         dealTilesToFactoryDisplays(gameState);
     }
 
     return { success: true, isGameOver, roundScores, winners };
+}
+
+export function sumRoundScores(playerRoundScores) {
+    let score = 0;
+    for (const lineScores of playerRoundScores) {
+        if (lineScores.floorLinePoints) {
+            score += lineScores.floorLinePoints;
+            continue;
+        }
+        score += lineScores.rowScore + lineScores.columnScore + lineScores.colourScore;
+    }
+    return score
 }
 
 export function determineWinners(gameState, finalRoundScores) {
@@ -272,7 +284,7 @@ export function determineWinners(gameState, finalRoundScores) {
     return winners;
 }
 
-export function countPlayerScores(gameState, player) {
+export function countPlayerScores(gameState, player, updateBoard = true) {
     const playerScores = [];
     for (let y = 0; y < player.patternLines.length; y++) {
         const line = player.patternLines[y];
@@ -281,14 +293,20 @@ export function countPlayerScores(gameState, player) {
             continue;
         }
 
+        const tilesToDiscard = line.slice(1);
         const x = getXPositionForColourOnLine(gameState, y, lastTile.colourId);
         player.wall[y][x] = line[0];
         const scores = scoreNewTile(gameState, player, lastTile, x, y);
-        player.score += scores.rowScore + scores.columnScore + scores.colourScore;
-        const tilesToDiscard = line.slice(1);
-        gameState.discardedTiles = gameState.discardedTiles.concat(tilesToDiscard);
-        for (let i = 0; i < line.length; i++) {
-            line[i] = null;
+
+        if (updateBoard) {
+            player.score += scores.rowScore + scores.columnScore + scores.colourScore;
+            gameState.discardedTiles = gameState.discardedTiles.concat(tilesToDiscard);
+            for (let i = 0; i < line.length; i++) {
+                line[i] = null;
+            }
+        }
+        else {
+            player.wall[y][x] = null;
         }
         scores.patternLineIndex = y;
         scores.discardedTiles = tilesToDiscard;
@@ -299,17 +317,19 @@ export function countPlayerScores(gameState, player) {
         (acc, value, i) => acc + gameState.rules.floorLinePenalties[i], 0
     );
     if (floorLinePoints) {
-        player.score += floorLinePoints;
         playerScores.push({ floorLinePoints, patternLineIndex: -1 });
-        const tiles = player.floorLine.filter(tile => {
-            if (tile.colourId === -1) {
-                gameState.centerOfTable = [tile];
-                return false;
-            }
-            return true;
-        });
-        gameState.discardedTiles = gameState.discardedTiles.concat(tiles);
-        player.floorLine = [];
+        if (updateBoard) {
+            player.score += floorLinePoints;
+            const tiles = player.floorLine.filter(tile => {
+                if (tile.colourId === -1) {
+                    gameState.centerOfTable = [tile];
+                    return false;
+                }
+                return true;
+            });
+            gameState.discardedTiles = gameState.discardedTiles.concat(tiles);
+            player.floorLine = [];
+        }
     }
     return playerScores;
 }
