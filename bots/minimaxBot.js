@@ -1,6 +1,20 @@
 import getPossibleMoves from './getPossibleMoves.js';
-import { determineWinners, drawTiles, scoreRound } from 'azul/functions/gameStandard.js';
+import { determineWinners, drawTiles, scoreRound, sumRoundScores } from 'azul/functions/gameStandard.js';
 import { countDisplayTiles, countLineTiles } from './util/line.js';
+
+export const testExports = {
+    buildTree,
+    sortNodes,
+    completedRowChecks
+};
+
+export const sortStats = {
+    currentPlayerDifference: 0,
+    winnerDifference: 0,
+    scoreDifference: 0,
+    completedRowDifference: 0,
+    noChange: 0,
+}
 
 export default function minimaxBot(gameState, depth = 2, moves = 10) {
     const immediateNodes = buildTree(gameState, null, depth, moves);
@@ -41,18 +55,18 @@ function buildTree(gameState, previousNode = null, depth = 3, moves = 3) {
             winners = null
         } = result;
         if (!roundScores) {
-            const scoreState = structuredClone(state);
-            const scores = scoreRound(scoreState);
+            const scores = scoreRound(state, false);
             roundScores = scores.roundScores;
-            winners = scores.winners ?? determineWinners(scoreState, roundScores);
+            winners = scores.winners ?? determineWinners(state, roundScores);
         }
         else if (!winners) {
             winners = determineWinners(state, roundScores);
         }
-        const node = {
+        nodes.push({
             move,
             previousNode,
             roundScores,
+            playerScoreDelta: roundScores.map(sumRoundScores),
             winnerIds: winners.map(winner => winner.index),
             isGameOver,
             isNewRound,
@@ -60,14 +74,13 @@ function buildTree(gameState, previousNode = null, depth = 3, moves = 3) {
             previousState: gameState,
             nextMoves: null,
             depth,
-        }
-        nodes.push(node);
+        });
     }
     if (!nodes.length) {
         return null;
     }
 
-    sortNodes(nodes, nodes[0].state.currentPlayerIndex);
+    sortNodes(nodes, gameState.currentPlayerIndex);
     const topNodes = nodes.slice(0, moves);
     for (const node of topNodes) {
         if (!node.isGameOver && !node.isNewRound) {
@@ -75,14 +88,6 @@ function buildTree(gameState, previousNode = null, depth = 3, moves = 3) {
         }
     }
     return topNodes;
-}
-
-export const sortStats = {
-    currentPlayerDifference: 0,
-    winnerDifference: 0,
-    scoreDifference: 0,
-    completedRowDifference: 0,
-    noChange: 0,
 }
 
 function sortNodes(moves, currentPlayerId) {
@@ -107,14 +112,12 @@ function sortNodes(moves, currentPlayerId) {
             return winnerDifference;
         }
 
-        const aScore = a.state.players[currentPlayerId].score - a.previousState.players[currentPlayerId].score;
-        const bScore = b.state.players[currentPlayerId].score - b.previousState.players[currentPlayerId].score;
-        const scoreDifference = bScore - aScore;
+        const scoreDifference = b.playerScoreDelta[currentPlayerId] - a.playerScoreDelta[currentPlayerId];
         // if (scoreDifference) {
         //     sortStats.scoreDifference++;
         //     return scoreDifference;
         // }
-        //
+
         const completedRowDifference = completedRowChecks(a, b);
         // if (completedRowDifference) {
         //     sortStats.completedRowDifference++;
@@ -122,7 +125,7 @@ function sortNodes(moves, currentPlayerId) {
         // }
 
         sortStats.noChange++;
-        return scoreDifference + completedRowDifference + (Math.min(3, b.depth) - Math.min(3, a.depth))
+        return scoreDifference + completedRowDifference + (Math.min(3, b.depth) - Math.min(3, a.depth));
         // return 0;
     });
 }

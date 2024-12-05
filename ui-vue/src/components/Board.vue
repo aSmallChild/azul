@@ -96,7 +96,7 @@ function emitDragEvent(eventName, lineIndex, event) {
             <div class="a-tile-lines">
                 <div class="a-tile-line" v-for="line of wall" ref="wallLineRefs">
                     <div class="a-tile-slot" v-for="colour of line"
-                         :style="{'--a-tile-slot-colour': getHexColour(colour) + '5'}">
+                         :style="{'--a-tile-slot-colour': getHexColour(colour) + '2'}">
                     </div>
                 </div>
             </div>

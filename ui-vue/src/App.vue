@@ -40,9 +40,8 @@ window.colour = (name) => getColourByName(name, game.state.rules.numberOfColours
 window.row = (id) => id > 0 ? id - 1 : id;
 window.display = (id) => id > 0 ? id - 1 : id;
 window.load = async (gameState) => {
-    setGameState(loadGame(gameState));
     tiles.value.clearTiles();
-    await placeAllTiles();
+    return setGameState(loadGame(gameState));
 };
 window.save = () => JSON.stringify(game.state);
 window.drawTiles = async (...args) => {
@@ -51,7 +50,7 @@ window.drawTiles = async (...args) => {
     return result;
 };
 
-window.player2 = (state) => minimaxBot(state, 4, 4);
+window.player2 = (state) => minimaxBot(state, 2, 10);
 
 window.player1 = async (...args) => {
     if (!window.player2) {
@@ -159,9 +158,9 @@ function setTile(tile, position, isVisible = true) {
     return tiles.value.setTile(tile, { position, isVisible });
 }
 
-function setGameState(state) {
+async function setGameState(state) {
     game.state = state;
-    placeAllTiles();
+    return placeAllTiles();
 }
 
 function tileSelect(tileId) {
@@ -189,7 +188,7 @@ function findDisplayTile(tileId) {
         }
     }
     const tile = game.state.centerOfTable.find(t => t.id === tileId);
-    if (tile.colourId >= 0) {
+    if (tile?.colourId >= 0) {
         return {tile, displayId: -1};
     }
     return null;

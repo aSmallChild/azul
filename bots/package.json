@@ -1,6 +1,9 @@
 {
     "name": "ml5-js",
     "type": "module",
+    "scripts": {
+        "test": "node --test"
+    },
     "dependencies": {
         "azul": "file:../game-js",
         "@tensorflow/tfjs": "^4.21.0"

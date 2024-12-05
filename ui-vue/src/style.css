@@ -8,6 +8,7 @@
     --a-tile-slot-size: 3rem;
     --a-tile-size: 2.75rem;
     --a-border-colour: #777;
+    --a-board-background-colour: #ddd;
 
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
@@ -45,7 +46,7 @@ body {
 }
 
 .a-board {
-    background-color: #ed9;
+    background-color: var(--a-board-background-colour);
     border: solid var(--a-border-size) var(--a-border-colour);
     display: inline-flex;
 }
@@ -122,7 +123,7 @@ body {
 .a-factory-display {
     border-radius: 50%;
     border: solid var(--a-border-size) var(--a-border-colour);
-    background-color: #eedd99;
+    background-color: var(--a-board-background-colour);
     --a-display-width: calc(var(--a-slots-x) * (var(--a-tile-slot-size) + 2 * var(--a-border-size)) + (var(--a-slots-x) + 1) * var(--a-gap));
     --a-size: calc(hypot(var(--a-display-width), var(--a-display-width)));
     display: inline-block;
