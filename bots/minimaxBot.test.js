@@ -80,6 +80,7 @@ const moves = [
             ],
             []
         ],
+        playerScoreDelta: [0, 0],
         'winnerIds': [0, 1],
         'isGameOver': false,
         'isNewRound': false,
@@ -117,6 +118,7 @@ const moves = [
             [{ 'rowScore': 1, 'columnScore': 0, 'colourScore': 0, 'rowCompleted': false, 'patternLineIndex': 1, 'discardedTiles': [{ 'id': 92, 'colourId': 2 }] }],
             []
         ],
+        playerScoreDelta: [1, 0],
         'winnerIds': [0],
         'isGameOver': false,
         'isNewRound': false,
@@ -163,6 +165,7 @@ const moves = [
             [],
             []
         ],
+        playerScoreDelta: [0, 0],
         'winnerIds': [
             0,
             1
@@ -210,10 +213,29 @@ describe('minimaxBot', () => {
             [{ 'id': 79, 'colourId': 2 }, { 'id': 92, 'colourId': 2 }],
         ];
         const move = minimaxBot(state2, 1, 1);
-        console.log(move);
         assert.strictEqual(move.displayId, 1, 'Picked the wrong display.');
         assert.strictEqual(move.colourId, 2, 'Picked the wrong colour.');
         assert.strictEqual(move.lineId, 1, 'Picked the wrong line.');
+    });
+    test('draws 5 tiles when it can fit them into the 5 line', () => {
+        state2.factoryDisplays = [
+            [{ 'id': 12, 'colourId': 1 },],
+            [{ 'id': 79, 'colourId': 2 }, { 'id': 93, 'colourId': 2 }, { 'id': 94, 'colourId': 2 }, { 'id': 95, 'colourId': 2 }, { 'id': 96, 'colourId': 2 }],
+        ];
+        const move = minimaxBot(state2, 1, 1);
+        const msg = JSON.stringify(move);
+        assert.strictEqual(move.displayId, 1, `Picked the wrong display. ${msg}`);
+        assert.strictEqual(move.colourId, 2, `Picked the wrong colour. ${msg}`);
+        assert.strictEqual(move.lineId, 4, `Picked the wrong line. ${msg}`);
+    });
+    test('fits tiles into the correct line', () => {
+        state2.factoryDisplays = [
+            [{ 'id': 79, 'colourId': 2 }, { 'id': 93, 'colourId': 2 }, { 'id': 94, 'colourId': 2 }, { 'id': 95, 'colourId': 2 }, { 'id': 96, 'colourId': 2 }],
+        ];
+        const move = minimaxBot(state2, 1, 1);
+        assert.strictEqual(move.displayId, 0, 'Picked the wrong display.');
+        assert.strictEqual(move.colourId, 2, 'Picked the wrong colour.');
+        assert.strictEqual(move.lineId, 4, 'Picked the wrong line.');
     });
     test('picks optimal line to place tiles in', () => {
         state2.factoryDisplays = [
@@ -221,7 +243,6 @@ describe('minimaxBot', () => {
             [{ 'id': 79, 'colourId': 2 }, { 'id': 92, 'colourId': 2 }],
         ];
         const move = minimaxBot(state2, 1, 1);
-        console.log(move);
         assert.strictEqual(move.displayId, 1, 'Picked the wrong display.');
         assert.strictEqual(move.colourId, 2, 'Picked the wrong colour.');
         assert.strictEqual(move.lineId, 1, 'Picked the wrong line.');

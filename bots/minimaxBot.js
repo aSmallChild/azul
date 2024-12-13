@@ -1,5 +1,5 @@
 import getPossibleMoves from './getPossibleMoves.js';
-import { determineWinners, drawTiles, scoreRound, sumRoundScores } from 'azul/functions/gameStandard.js';
+import { drawTiles, scoreRound, sumRoundScores } from 'azul/functions/gameStandard.js';
 import { countDisplayTiles, countLineTiles } from './util/line.js';
 
 export const testExports = {
@@ -57,17 +57,14 @@ function buildTree(gameState, previousNode = null, depth = 3, moves = 3) {
         if (!roundScores) {
             const scores = scoreRound(state, false);
             roundScores = scores.roundScores;
-            winners = scores.winners ?? determineWinners(state, roundScores);
-        }
-        else if (!winners) {
-            winners = determineWinners(state, roundScores);
+            winners = scores.winners;
         }
         nodes.push({
             move,
             previousNode,
             roundScores,
             playerScoreDelta: roundScores.map(sumRoundScores),
-            winnerIds: winners.map(winner => winner.index),
+            winnerIds: winners?.map(winner => winner.index) ?? [],
             isGameOver,
             isNewRound,
             state,
@@ -124,18 +121,18 @@ function sortNodes(moves, currentPlayerId) {
         //     return completedRowDifference;
         // }
 
-        sortStats.noChange++;
-        return scoreDifference + completedRowDifference + (Math.min(3, b.depth) - Math.min(3, a.depth));
+        const depthDifference = b.depth - a.depth;
+        return plusOrMinusOne(scoreDifference) * 3 + plusOrMinusOne(completedRowDifference) * 2 + plusOrMinusOne(depthDifference);
+        // sortStats.noChange++;
         // return 0;
     });
 }
 
 function wonInMoveRank(move, currentPlayerId) {
-    let wonInThisMove = move.winnerIds.find(winnerId => winnerId === currentPlayerId) ? 1 : -1;
-    if (wonInThisMove > 0 && move.winnerIds.length === 1) {
-        wonInThisMove += move.isGameOver ? 2 : 1;
+    if (!move.winnerIds.includes(currentPlayerId)) {
+        return 0;
     }
-    return wonInThisMove;
+    return move.isGameOver && move.winnerIds.length === 1 ? 2 : 1;
 }
 
 function completedRowChecks(a, b) {
@@ -149,7 +146,7 @@ function completedRowChecks(a, b) {
     // }
     const pA = progressTowardRowCompletion(a.move, a.previousState);
     const pB = progressTowardRowCompletion(b.move, b.previousState);
-    const progressDifference = Math.abs(pB.progress) - Math.abs(pA.progress);
+    const progressDifference = pB.progress - pA.progress;
     if (progressDifference) {
         return progressDifference;
     }
@@ -177,12 +174,19 @@ function completedRowChecks(a, b) {
 function progressTowardRowCompletion(move, previousState) {
     const playerId = previousState.currentPlayerIndex;
     const player = previousState.players[playerId];
-    const display = move.displayId < 1 ? previousState.centerOfTable : previousState.factoryDisplays[move.displayId];
+    const display = move.displayId < 0 ? previousState.centerOfTable : previousState.factoryDisplays[move.displayId];
     const tilesDrawn = countDisplayTiles(display, move.colourId);
     if (move.lineId < 0) {
         return {progress: -1 * tilesDrawn, tilesRequired: -1, tilesDrawn};
     }
     const line = player.patternLines[move.lineId];
     const tilesRequired = line.length - countLineTiles(line);
-    return {progress: -1 * (tilesRequired - tilesDrawn), tilesRequired, tilesDrawn};
+    return {progress: -1 * (tilesDrawn - tilesRequired), tilesRequired, tilesDrawn};
+}
+
+function plusOrMinusOne(n) {
+    if (!n) {
+        return 0;
+    }
+    return n > 0 ? 1 : -1;
 }
