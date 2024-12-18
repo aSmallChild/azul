@@ -16,19 +16,33 @@ export const sortStats = {
     noChange: 0,
 }
 
-export default async function minimaxBot(gameState, depth = 2, moves = 10) {
-    depth = Math.max(1, depth);
+export default async function minimaxBot(gameState, options = {}) {
+    const { depth = 2, moves = 10, workerPool = null } = options;
+    if (depth < 1) {
+        throw new Error('Minimum depth is 1');
+    }
     let nodes = buildTreeNodes(gameState, null, 0, moves);
     let unprocessedNodeIndex = 0;
     for (let i = 1; i < depth; i++) {
-        let newNodes = [];
+        const newNodes = [];
         while (unprocessedNodeIndex < nodes.length) {
             const node = nodes[unprocessedNodeIndex++];
             if (!node.isGameOver && !node.isNewRound) {
-                newNodes = newNodes.concat(buildTreeNodes(node.state, node, i, moves))
+                if (!workerPool) {
+                    newNodes.push(...buildTreeNodes(node.state, node, i, moves));
+                    continue;
+                }
+                newNodes.push(workerPool.runTask({ gameState: node.state, parent: node, depth: i, moves }));
             }
         }
-        nodes = nodes.concat(newNodes);
+        if (!workerPool) {
+            nodes.push(...newNodes);
+            continue;
+        }
+
+        for (const nextNewNodes of await Promise.all(newNodes)) {
+            nodes.push(...nextNewNodes);
+        }
     }
     const nextMove = findNodeThatLeadsToBestOutcome(nodes, gameState.currentPlayerIndex);
     return nextMove.move;
@@ -51,7 +65,7 @@ function findNodeThatLeadsToBestOutcome(immediateNodes, playerId) {
     return immediateMove;
 }
 
-function buildTreeNodes(gameState, previousNode = null, depth = 3, moves = 3) {
+export function buildTreeNodes(gameState, previousNode = null, depth = 3, moves = 3) {
     const nodes = [];
     for (const move of getPossibleMoves(gameState)) {
         const state = structuredClone(gameState);
