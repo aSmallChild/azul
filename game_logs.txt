@@ -1,0 +1,66 @@
+
+First tournament Minimax vs RNG (minimax using 4 random moves from rngbot with a depth of 4, fail)
+Game 1 complete, 1 winner(s), Minimax Bot in 7019ms
+Game 2 complete, 1 winner(s), RNG Bot in 6245ms
+Game 3 complete, 1 winner(s), RNG Bot in 8254ms
+Game 4 complete, 1 winner(s), RNG Bot in 10842ms
+Game 5 complete, 1 winner(s), RNG Bot in 7208ms
+Game 6 complete, 1 winner(s), Minimax Bot in 7549ms
+Game 7 complete, 1 winner(s), RNG Bot in 8423ms
+Game 8 complete, 1 winner(s), RNG Bot in 7847ms
+Game 9 complete, 1 winner(s), RNG Bot in 9239ms
+Game 10 complete, 1 winner(s), RNG Bot in 8093ms
+Game 11 complete, 1 winner(s), RNG Bot in 7646ms
+Game 12 complete, 1 winner(s), Minimax Bot in 8889ms
+Game 13 complete, 1 winner(s), RNG Bot in 7936ms
+Game 14 complete, 1 winner(s), RNG Bot in 6778ms
+Game 15 complete, 1 winner(s), Minimax Bot in 7399ms
+
+
+Before
+Tournament complete 2082981ms. Average game duration: 10,414.90ms
+1st place: RNG Bot with 178 wins and an average score of 29
+2nd place: Minimax Bot with 22 wins and an average score of 2
+Minimax sort stats {
+  currentPlayerDifference: 0,
+  winnerDifference: 12675,
+  scoreDifference: 0,
+  completedRowDifference: 0,
+  noChange: 7039442
+}
+
+After factoring in round scores
+1st place: Minimax Bot with 162 wins and an average score of 31
+2nd place: RNG Bot with 38 wins and an average score of 6
+
+After fixing bugs in minimax bot
+Tournament complete 373456ms. Average game duration: 3,734.56ms
+1st place: Minimax Bot with 99 wins and an average score of 57
+2nd place: RNG Bot with 1 wins and an average score of 0
+
+Tournament complete 2281491ms. Average game duration: 22,814.91ms
+1st place: Minimax Bot (depth 2, moves 10) with 59 wins and an average score of 43
+2nd place: Minimax Bot (depth 4, moves 4) with 41 wins and an average score of 28
+3rd place: RNG Bot 1 with 0 wins and an average score of 0
+4th place: RNG Bot 2 with 0 wins and an average score of 0
+
+After removing recursion from minimax bot
+Tournament complete in 124720ms. Average game duration: 6236.00ms
+1st place: Minimax Bot (depth 2, moves 10) with 12 wins and an average score of 44
+2nd place: Minimax Bot (depth 4, moves 4) with 8 wins and an average score of 26
+3rd place: RNG Bot 1 with 0 wins and an average score of 0
+4th place: RNG Bot 2 with 0 wins and an average score of 0
+
+After adding worker threads
+Tournament complete in 42420ms. Average game duration: 2121.00ms
+1st place: Minimax Bot (depth 2, moves 10) with 12 wins and an average score of 44
+2nd place: Minimax Bot (depth 4, moves 4) with 8 wins and an average score of 29
+3rd place: RNG Bot 1 with 0 wins and an average score of 0
+4th place: RNG Bot 2 with 0 wins and an average score of 0
+
+Bumping up the depth reducing the moves
+Tournament complete in 289316ms. Average game duration: 14465.80ms
+1st place: Minimax Bot (depth 1, moves 5) with 16 wins and an average score of 59
+2nd place: Minimax Bot (depth 5, moves 5) with 5 wins and an average score of 16
+3rd place: RNG Bot 1 with 0 wins and an average score of 0
+4th place: RNG Bot 2 with 0 wins and an average score of 0

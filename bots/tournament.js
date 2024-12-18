@@ -13,8 +13,9 @@ await hostTournament([
         createTournamentPlayer('RNG Bot 2', rngBot),
         // createTournamentPlayer('RNG Bot 3', rngBot),
         // createTournamentPlayer('RNG Bot 4', rngBot),
-        createTournamentPlayer('Minimax Bot (depth 2, moves 10)', state => minimaxBot(state, { depth: 2, moves: 10, workerPool })),
-        createTournamentPlayer('Minimax Bot (depth 4, moves 4)', state => minimaxBot(state, { depth: 4, moves: 4, workerPool })),
+        createTournamentPlayer('Minimax Bot (depth 1, moves 5)', state => minimaxBot(state, { depth: 1, moves: 5, workerPool })),
+        // createTournamentPlayer('Minimax Bot (depth 4, moves 4)', state => minimaxBot(state, { depth: 4, moves: 4, workerPool })),
+        createTournamentPlayer('Minimax Bot (depth 5, moves 5)', state => minimaxBot(state, { depth: 5, moves: 5, workerPool })),
     ],
     {
         createGame: createGameState,
