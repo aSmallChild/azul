@@ -80,10 +80,10 @@ export function drawTiles(gameState, displayId, colourId, patternLineIndex, play
 
     const player = gameState.players[playerId];
     const display = displayId < 0 ? gameState.centerOfTable : gameState.factoryDisplays[displayId];
-    const remainingTiles = display.filter(tile => tile.colourId !== colourId);
-    const startTile = remainingTiles[0]?.colourId === -1 ? remainingTiles.splice(0, 1) : null;
+    const remainingTiles = display.filter(tile => tile.colourId >= 0 && tile.colourId !== colourId);
+    const startTile = display.find(tile => tile.colourId < 0);
     if (startTile) {
-        addTilesToFloorLine(gameState, player, startTile);
+        addTilesToFloorLine(gameState, player, [startTile]);
         gameState.nextRoundStartingPlayerIndex = player.index;
     }
     if (displayId < 0) {

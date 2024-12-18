@@ -3,7 +3,7 @@ import { drawTiles, scoreRound, sumRoundScores } from 'azul/functions/gameStanda
 import { countDisplayTiles, countLineTiles } from './util/line.js';
 
 export const testExports = {
-    buildTree,
+    buildTreeNodes,
     sortNodes,
     completedRowChecks
 };
@@ -16,34 +16,42 @@ export const sortStats = {
     noChange: 0,
 }
 
-export default function minimaxBot(gameState, depth = 2, moves = 10) {
-    const immediateNodes = buildTree(gameState, null, depth, moves);
-    const nextMove = findNodeThatLeadsToBestOutcome(immediateNodes, gameState.currentPlayerIndex);
+export default async function minimaxBot(gameState, depth = 2, moves = 10) {
+    depth = Math.max(1, depth);
+    let nodes = buildTreeNodes(gameState, null, 0, moves);
+    let unprocessedNodeIndex = 0;
+    for (let i = 1; i < depth; i++) {
+        let newNodes = [];
+        while (unprocessedNodeIndex < nodes.length) {
+            const node = nodes[unprocessedNodeIndex++];
+            if (!node.isGameOver && !node.isNewRound) {
+                newNodes = newNodes.concat(buildTreeNodes(node.state, node, i, moves))
+            }
+        }
+        nodes = nodes.concat(newNodes);
+    }
+    const nextMove = findNodeThatLeadsToBestOutcome(nodes, gameState.currentPlayerIndex);
     return nextMove.move;
 }
 
 function findNodeThatLeadsToBestOutcome(immediateNodes, playerId) {
-    const allNodes = [];
-    allNodes.push(...immediateNodes);
+    let allNodes = [].concat(immediateNodes);
     for (let i = 0; i < allNodes.length; i++) {
         const currentMove = allNodes[i];
         if (currentMove.nextMoves) {
-            allNodes.push(...currentMove.nextMoves);
+            allNodes = allNodes.concat(currentMove.nextMoves);
         }
     }
-    sortNodes(allNodes, playerId);
-    let immediateMove = allNodes[0];
+    const playerMoves = allNodes.filter(node => node.previousState.currentPlayerIndex === playerId);
+    sortNodes(playerMoves, playerId);
+    let immediateMove = playerMoves[0];
     while (immediateMove.previousNode) {
         immediateMove = immediateMove.previousNode;
     }
     return immediateMove;
 }
 
-function buildTree(gameState, previousNode = null, depth = 3, moves = 3) {
-    if (depth < 0) {
-        return null;
-    }
-
+function buildTreeNodes(gameState, previousNode = null, depth = 3, moves = 3) {
     const nodes = [];
     for (const move of getPossibleMoves(gameState)) {
         const state = structuredClone(gameState);
@@ -73,18 +81,8 @@ function buildTree(gameState, previousNode = null, depth = 3, moves = 3) {
             depth,
         });
     }
-    if (!nodes.length) {
-        return null;
-    }
-
     sortNodes(nodes, gameState.currentPlayerIndex);
-    const topNodes = nodes.slice(0, moves);
-    for (const node of topNodes) {
-        if (!node.isGameOver && !node.isNewRound) {
-            buildTree(node.state, node, depth - 1, moves);
-        }
-    }
-    return topNodes;
+    return nodes.slice(0, moves);
 }
 
 function sortNodes(moves, currentPlayerId) {
@@ -121,7 +119,7 @@ function sortNodes(moves, currentPlayerId) {
         //     return completedRowDifference;
         // }
 
-        const depthDifference = b.depth - a.depth;
+        const depthDifference = a.depth - b.depth; // smaller depth the better
         return plusOrMinusOne(scoreDifference) * 3 + plusOrMinusOne(completedRowDifference) * 2 + plusOrMinusOne(depthDifference);
         // sortStats.noChange++;
         // return 0;
@@ -177,11 +175,11 @@ function progressTowardRowCompletion(move, previousState) {
     const display = move.displayId < 0 ? previousState.centerOfTable : previousState.factoryDisplays[move.displayId];
     const tilesDrawn = countDisplayTiles(display, move.colourId);
     if (move.lineId < 0) {
-        return {progress: -1 * tilesDrawn, tilesRequired: -1, tilesDrawn};
+        return { progress: -1 * tilesDrawn, tilesRequired: -1, tilesDrawn };
     }
     const line = player.patternLines[move.lineId];
     const tilesRequired = line.length - countLineTiles(line);
-    return {progress: -1 * (tilesDrawn - tilesRequired), tilesRequired, tilesDrawn};
+    return { progress: -1 * (tilesDrawn - tilesRequired), tilesRequired, tilesDrawn };
 }
 
 function plusOrMinusOne(n) {

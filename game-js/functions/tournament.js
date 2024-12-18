@@ -7,7 +7,7 @@ export function createPlayer(name, drawTiles) {
     }
 }
 
-export function hostTournament(players = [], params = {}) {
+export async function hostTournament(players = [], params = {}) {
     const {
         iterations = 1000,
         createGame,
@@ -26,7 +26,7 @@ export function hostTournament(players = [], params = {}) {
         let turnResult;
         do {
             const player = players[state.currentPlayerIndex];
-            const move = player.drawTiles(state);
+            const move = await player.drawTiles(state);
             if (!move) {
                 const message = `Player ${player.name} could not figure out what move to make!`;
                 console.error(message);
@@ -57,7 +57,8 @@ export function hostTournament(players = [], params = {}) {
     }
 
     const duration = Date.now() - start;
-    console.info(`Tournament complete ${duration}ms`);
+    const averageGameDuration = duration / iterations;
+    console.info(`Tournament complete in ${duration}ms. Average game duration: ${averageGameDuration.toFixed(2)}ms`);
     const placings = players.map(player => player);
     placings.sort((a, b) => {
         const winDifference = b.wins - a.wins;
